@@ -131,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Even a failed logout must not block the redirect.
       }
       emitAuthChanged();
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a hard navigation is required: a soft router.push can race the cleared Set-Cookie and get bounced back by the proxy
       window.location.assign("/login");
     });
     return () => setSessionExpiredHandler(null);
