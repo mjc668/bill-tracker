@@ -1,8 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { PaymentInstanceOut } from "@/lib/payments-api";
+import {
+  createAmountFormatter,
+  formatCurrencyTotals,
+  remainingAmount,
+  sumByCurrency,
+} from "@/lib/payment-totals";
 import PaymentRow, { STATUS_STYLES } from "./PaymentRow";
 
 interface Props {
@@ -39,6 +45,7 @@ export default function PaymentCalendar({
 }: Props) {
   const t = useTranslations("PaymentsPage");
   const locale = useLocale();
+  const amountFormatter = createAmountFormatter(locale);
 
   const [yearStr, monthStr] = month.split("-");
   const year = parseInt(yearStr, 10);
@@ -76,11 +83,24 @@ export default function PaymentCalendar({
       month: "long",
     }).format(new Date(key + "T00:00:00"));
 
+  const formatRemaining = (items: PaymentInstanceOut[]) =>
+    formatCurrencyTotals(sumByCurrency(items, remainingAmount), amountFormatter);
+
+  const days: (string | null)[] = [
+    ...Array.from({ length: offset }, () => null),
+    ...Array.from({ length: totalDays }, (_, i) =>
+      dateKey(year, monthIndex, i + 1),
+    ),
+  ];
+  while (days.length % 7 !== 0) days.push(null);
+  const weeks: (string | null)[][] = [];
+  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+
   const selectedInstances = selectedDay ? (byDay.get(selectedDay) ?? []) : [];
 
   return (
     <div data-testid="payment-calendar" role="group" aria-label={t("calendarLabel")}>
-      <div data-testid="payment-calendar-grid" className="grid grid-cols-7 gap-1">
+      <div data-testid="payment-calendar-grid" className="grid grid-cols-8 gap-1">
         {weekdayHeaders.map((wd, i) => (
           <div
             key={i}
@@ -89,65 +109,84 @@ export default function PaymentCalendar({
             {wd.slice(0, 2)}
           </div>
         ))}
+        <div className="flex h-7 items-center justify-center truncate px-0.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+          {t("calendarWeek")}
+        </div>
 
-        {Array.from({ length: offset }).map((_, i) => (
-          <div key={`gap-${i}`} />
-        ))}
-
-        {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
-          const key = dateKey(year, monthIndex, day);
-          const dayInstances = byDay.get(key) ?? [];
-          const visible = dayInstances.slice(0, MAX_CHIPS);
-          const extra = dayInstances.length - visible.length;
-          const isSelected = key === selectedDay;
-          const isToday = key === todayStr;
+        {weeks.map((weekDays, weekIndex) => {
+          const weekItems = weekDays.flatMap((key) =>
+            key ? (byDay.get(key) ?? []) : [],
+          );
           return (
-            <button
-              key={key}
-              type="button"
-              data-testid={`calendar-day-${key}`}
-              aria-label={formatFullDate(key)}
-              aria-pressed={isSelected}
-              onClick={() => setSelectedDay(key)}
-              className={`flex min-h-[76px] flex-col items-stretch gap-1 rounded-lg border p-1 text-left align-top transition-colors ${
-                isSelected
-                  ? "border-green-600 bg-green-50 dark:border-emerald-600 dark:bg-emerald-900/20"
-                  : "border-slate-200 bg-white hover:border-green-300 hover:bg-green-50/50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-700"
-              }`}
-            >
-              <span
-                className={`self-center rounded-full px-1.5 text-xs font-semibold tabular-nums ${
-                  isToday
-                    ? "bg-green-700 text-white dark:bg-emerald-600"
-                    : isSelected
-                      ? "text-green-800 dark:text-emerald-300"
-                      : "text-slate-600 dark:text-slate-300"
-                }`}
-              >
-                {day}
-              </span>
-              {visible.map((inst) => (
-                <span
-                  key={inst.id}
-                  className={`block truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight ${
-                    STATUS_STYLES[inst.status] ?? ""
-                  }`}
-                >
-                  {inst.bill_name} · {inst.amount}
-                </span>
-              ))}
-              {extra > 0 && (
-                <span className="block text-center text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                  +{extra}
-                </span>
-              )}
-            </button>
+            <Fragment key={weekIndex}>
+              {weekDays.map((key, dayIndex) => {
+                if (!key) {
+                  return <div key={`gap-${weekIndex}-${dayIndex}`} />;
+                }
+                const dayInstances = byDay.get(key) ?? [];
+                const day = parseInt(key.slice(8), 10);
+                const visible = dayInstances.slice(0, MAX_CHIPS);
+                const extra = dayInstances.length - visible.length;
+                const isSelected = key === selectedDay;
+                const isToday = key === todayStr;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    data-testid={`calendar-day-${key}`}
+                    aria-label={formatFullDate(key)}
+                    aria-pressed={isSelected}
+                    onClick={() => setSelectedDay(key)}
+                    className={`flex min-h-[76px] flex-col items-stretch gap-1 rounded-lg border p-1 text-left align-top transition-colors ${
+                      isSelected
+                        ? "border-green-600 bg-green-50 dark:border-emerald-600 dark:bg-emerald-900/20"
+                        : "border-slate-200 bg-white hover:border-green-300 hover:bg-green-50/50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-700"
+                    }`}
+                  >
+                    <span
+                      className={`self-center rounded-full px-1.5 text-xs font-semibold tabular-nums ${
+                        isToday
+                          ? "bg-green-700 text-white dark:bg-emerald-600"
+                          : isSelected
+                            ? "text-green-800 dark:text-emerald-300"
+                            : "text-slate-600 dark:text-slate-300"
+                      }`}
+                    >
+                      {day}
+                    </span>
+                    {visible.map((inst) => (
+                      <span
+                        key={inst.id}
+                        className={`block truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight ${
+                          STATUS_STYLES[inst.status] ?? ""
+                        }`}
+                      >
+                        {inst.bill_name} · {inst.amount}
+                      </span>
+                    ))}
+                    {extra > 0 && (
+                      <span className="block text-center text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                        +{extra}
+                      </span>
+                    )}
+                    {dayInstances.length > 0 && (
+                      <span className="mt-auto block break-words text-[10px] font-semibold leading-tight text-slate-500 dark:text-slate-400">
+                        {formatRemaining(dayInstances)}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+              <div className="flex min-h-[76px] flex-col items-end gap-1 rounded-lg px-1 pt-1.5">
+                {weekItems.length > 0 && (
+                  <span className="text-right text-[10px] font-semibold leading-tight text-slate-400 dark:text-slate-500">
+                    {formatRemaining(weekItems)}
+                  </span>
+                )}
+              </div>
+            </Fragment>
           );
         })}
-
-        {Array.from({ length: (7 - ((offset + totalDays) % 7)) % 7 }).map((_, i) => (
-          <div key={`tail-${i}`} />
-        ))}
       </div>
 
       <div data-testid="calendar-selected-day" className="mt-5">
@@ -155,6 +194,14 @@ export default function PaymentCalendar({
           <h3 className="mb-3 text-sm font-semibold capitalize text-slate-700 dark:text-slate-200">
             {formatFullDate(selectedDay)}
           </h3>
+        )}
+        {selectedInstances.length > 0 && (
+          <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+            {t("calendarDaySummary", {
+              count: selectedInstances.length,
+              amount: formatRemaining(selectedInstances),
+            })}
+          </p>
         )}
         {selectedInstances.length === 0 ? (
           <p className="text-sm text-slate-400 dark:text-slate-500">

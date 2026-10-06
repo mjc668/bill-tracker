@@ -261,7 +261,16 @@
         "clearFilters": "Clear filters",
         "noMatches": "No payments match these filters",
         "calendarLabel": "Payment calendar",
-        "calendarEmptyDay": "No payments on this day"
+        "calendarEmptyDay": "No payments on this day",
+        "calendarWeek": "Week",
+        "calendarDaySummary": "{count, plural, one {# payment} other {# payments}} · {amount}",
+        "monthDue": "Due",
+        "monthPaid": "Paid",
+        "monthRemaining": "Remaining",
+        "overdueAging": "Overdue aging",
+        "aging1to7": "1–7 days",
+        "aging8to30": "8–30 days",
+        "aging31plus": "31+ days"
     },
     "PaymentRow": {
         "status": {"upcoming": "Upcoming", "overdue": "Overdue", "paid": "Paid"},

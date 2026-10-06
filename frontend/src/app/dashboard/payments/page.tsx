@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   CalendarDays,
@@ -22,6 +22,14 @@ import { type Category } from "@/lib/categories-api";
 import { categoryValue, sortCategories } from "@/lib/categories";
 import { downloadXlsx } from "@/lib/export-api";
 import { SessionExpiredError } from "@/lib/api";
+import {
+  createAmountFormatter,
+  dueAmount,
+  formatCurrencyTotals,
+  paidAmount,
+  remainingAmount,
+  sumByCurrency,
+} from "@/lib/payment-totals";
 import PaymentRow from "@/components/payments/PaymentRow";
 import PaymentCalendar from "@/components/payments/PaymentCalendar";
 import PaymentFilters, {
@@ -57,6 +65,27 @@ function getTodayStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function formatDayLabel(date: string, locale: string): string {
+  const label = new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(new Date(date + "T00:00:00"));
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function daysPast(dueDate: string, todayStr: string): number {
+  const due = new Date(dueDate + "T00:00:00").getTime();
+  const today = new Date(todayStr + "T00:00:00").getTime();
+  return Math.round((today - due) / 86_400_000);
+}
+
+const AGING_BUCKETS = [
+  { key: "aging1to7", min: 1, max: 7 },
+  { key: "aging8to30", min: 8, max: 30 },
+  { key: "aging31plus", min: 31, max: Number.POSITIVE_INFINITY },
+] as const;
+
 function uniqueCategories(categories: Category[]): Category[] {
   const byId = new Map<number, Category>();
   for (const category of categories) byId.set(category.id, category);
@@ -91,10 +120,7 @@ function PaymentsPageInner() {
   const tRow = useTranslations("PaymentRow");
   const tRoot = useTranslations();
   const locale = useLocale();
-  const amountFormatter = new Intl.NumberFormat(locale, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  const amountFormatter = createAmountFormatter(locale);
 
   const today = new Date();
   const currentYear = today.getFullYear();
@@ -200,6 +226,10 @@ function PaymentsPageInner() {
     return true;
   });
 
+  const monthDue = sumByCurrency(instances, dueAmount);
+  const monthPaid = sumByCurrency(instances, paidAmount);
+  const monthRemaining = sumByCurrency(instances, remainingAmount);
+
   // Urgency-first list: overdue, then upcoming, then paid — each by due date.
   // Totals use the remaining balance (or the paid amount for the Paid section)
   // and are grouped per currency since bills can differ.
@@ -211,20 +241,28 @@ function PaymentsPageInner() {
           a.due_date.localeCompare(b.due_date) ||
           a.bill_name.localeCompare(b.bill_name),
       );
-    const totals = new Map<string, number>();
+    const valueOf = key === "paid" ? paidAmount : remainingAmount;
+    const totals = sumByCurrency(items, valueOf);
+    const groups: { dueDate: string; items: PaymentInstanceOut[] }[] = [];
     for (const inst of items) {
-      const amount = parseFloat(inst.amount) || 0;
-      const paid =
-        inst.paid_amount != null ? parseFloat(inst.paid_amount) || 0 : 0;
-      const value =
-        key === "paid"
-          ? inst.paid_amount != null
-            ? paid
-            : amount
-          : Math.max(amount - paid, 0);
-      totals.set(inst.currency, (totals.get(inst.currency) ?? 0) + value);
+      const last = groups[groups.length - 1];
+      if (last && last.dueDate === inst.due_date) {
+        last.items.push(inst);
+      } else {
+        groups.push({ dueDate: inst.due_date, items: [inst] });
+      }
     }
-    return { key, items, totals };
+    const aging =
+      key === "overdue"
+        ? AGING_BUCKETS.map((bucket) => ({
+            key: bucket.key,
+            items: items.filter((inst) => {
+              const days = daysPast(inst.due_date, todayStr);
+              return days >= bucket.min && days <= bucket.max;
+            }),
+          })).filter((bucket) => bucket.items.length > 0)
+        : [];
+    return { key, items, totals, groups, aging };
   }).filter((section) => section.items.length > 0);
 
   // The calendar stays month-scoped even when the list includes overdue items
@@ -438,6 +476,40 @@ function PaymentsPageInner() {
             )}
           </div>
         )}
+        {!loading && !loadError && instances.length > 0 && (
+          <div className="mt-3 space-y-2.5">
+            {[...monthDue].map(([currency, due]) => {
+              const paid = monthPaid.get(currency) ?? 0;
+              const remaining = monthRemaining.get(currency) ?? 0;
+              const paidPercent =
+                due > 0 ? Math.min(100, Math.max(0, (paid / due) * 100)) : 0;
+              return (
+                <div key={currency} className="flex flex-col gap-1">
+                  <p className="text-xs font-medium tabular-nums text-slate-500 dark:text-slate-400">
+                    {t("monthDue")}: {amountFormatter.format(due)} {currency}
+                    <span className="mx-1.5 text-slate-300 dark:text-slate-600">·</span>
+                    {t("monthPaid")}: {amountFormatter.format(paid)} {currency}
+                    <span className="mx-1.5 text-slate-300 dark:text-slate-600">·</span>
+                    {t("monthRemaining")}: {amountFormatter.format(remaining)} {currency}
+                  </p>
+                  <div
+                    role="progressbar"
+                    aria-label={`${t("monthPaid")} / ${t("monthDue")}`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(paidPercent)}
+                    className="h-1.5 w-full overflow-hidden rounded bg-slate-100 dark:bg-slate-700"
+                  >
+                    <div
+                      className="h-full rounded bg-emerald-500"
+                      style={{ width: `${paidPercent}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Error banner */}
@@ -515,7 +587,7 @@ function PaymentsPageInner() {
       {/* Payment list */}
       {!loading && !loadError && view === "list" && filteredInstances.length > 0 && (
         <div className="flex flex-col gap-4">
-          {sections.map(({ key, items, totals }) => (
+          {sections.map(({ key, items, totals, groups, aging }) => (
             <div key={key} data-testid={`payment-section-${key}`}>
               <button
                 onClick={() => toggle(key)}
@@ -547,15 +619,55 @@ function PaymentsPageInner() {
               </button>
               {!collapsed.has(key) && (
                 <div className="flex flex-col gap-2">
-                  {items.map((inst) => (
-                    <PaymentRow
-                      key={inst.id}
-                      instance={inst}
-                      readOnly={false}
-                      onMarkPaid={setDialogTarget}
-                      onDelete={setDeleteTarget}
-                      onReverted={handleInstanceReverted}
-                    />
+                  {key === "overdue" && aging.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        {t("overdueAging")}
+                      </span>
+                      {aging.map((bucket) => (
+                        <span
+                          key={bucket.key}
+                          className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400"
+                        >
+                          {t(bucket.key)} · {bucket.items.length} ·{" "}
+                          <span className="tabular-nums">
+                            {formatCurrencyTotals(
+                              sumByCurrency(bucket.items, remainingAmount),
+                              amountFormatter,
+                            )}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {groups.map((group) => (
+                    <Fragment key={group.dueDate}>
+                      <div className="flex items-center gap-2 pt-1">
+                        <span className="shrink-0 text-[11px] font-semibold capitalize text-slate-500 dark:text-slate-400">
+                          {formatDayLabel(group.dueDate, locale)}
+                        </span>
+                        <span className="shrink-0 text-[11px] font-medium tabular-nums text-slate-400 dark:text-slate-500">
+                          {formatCurrencyTotals(
+                            sumByCurrency(
+                              group.items,
+                              key === "paid" ? paidAmount : remainingAmount,
+                            ),
+                            amountFormatter,
+                          )}
+                        </span>
+                        <div className="h-px flex-1 bg-slate-100 dark:bg-slate-700/60" />
+                      </div>
+                      {group.items.map((inst) => (
+                        <PaymentRow
+                          key={inst.id}
+                          instance={inst}
+                          readOnly={false}
+                          onMarkPaid={setDialogTarget}
+                          onDelete={setDeleteTarget}
+                          onReverted={handleInstanceReverted}
+                        />
+                      ))}
+                    </Fragment>
                   ))}
                 </div>
               )}

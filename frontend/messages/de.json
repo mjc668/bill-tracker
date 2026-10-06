@@ -261,7 +261,16 @@
         "clearFilters": "Filter zurücksetzen",
         "noMatches": "Keine Zahlungen entsprechen diesen Filtern",
         "calendarLabel": "Zahlungskalender",
-        "calendarEmptyDay": "Keine Zahlungen an diesem Tag"
+        "calendarEmptyDay": "Keine Zahlungen an diesem Tag",
+        "calendarWeek": "Woche",
+        "calendarDaySummary": "{count, plural, one {# Zahlung} other {# Zahlungen}} · {amount}",
+        "monthDue": "Fällig",
+        "monthPaid": "Bezahlt",
+        "monthRemaining": "Offen",
+        "overdueAging": "Überfällig seit",
+        "aging1to7": "1–7 Tage",
+        "aging8to30": "8–30 Tage",
+        "aging31plus": "31+ Tage"
     },
     "PaymentRow": {
         "status": {
