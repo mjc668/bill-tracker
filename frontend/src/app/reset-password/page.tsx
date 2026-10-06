@@ -10,10 +10,21 @@ import { apiFetch } from "@/lib/api";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
+// Reset links now carry the token in the URL fragment (`#token=...`) so it is
+// never sent to the server in request logs or Referer headers. The query
+// parameter is still accepted so links emailed before this change keep working.
+function readResetToken(queryToken: string | null): string {
+  if (typeof window !== "undefined") {
+    const hash = window.location.hash.replace(/^#/, "");
+    const fromHash = new URLSearchParams(hash).get("token");
+    if (fromHash) return fromHash;
+  }
+  return queryToken ?? "";
+}
+
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token") ?? "";
   const t = useTranslations("Auth");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +47,10 @@ function ResetPasswordForm() {
     try {
       await apiFetch("/auth/reset-password", {
         method: "POST",
-        body: JSON.stringify({ token, new_password: newPassword }),
+        body: JSON.stringify({
+          token: readResetToken(searchParams.get("token")),
+          new_password: newPassword,
+        }),
       });
       router.push("/login");
     } catch {

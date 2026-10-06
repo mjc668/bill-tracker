@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { connection } from "next/server";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/context/auth-context";
@@ -33,6 +34,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   await connection();
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang="en"
@@ -41,6 +43,7 @@ export default async function RootLayout({
       <head>
         {/* Prevent flash of wrong theme */}
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');})();`,
           }}
@@ -54,6 +57,7 @@ export default async function RootLayout({
           const apiPrefix = process.env.API_PREFIX?.trim() ?? "";
           return (
             <script
+              nonce={nonce}
               dangerouslySetInnerHTML={{
                 __html: `window.__PT_API_URL__=${serializeForInlineScript(apiBaseUrl)};window.__PT_API_PREFIX__=${serializeForInlineScript(apiPrefix)};`,
               }}

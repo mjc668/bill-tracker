@@ -11,20 +11,40 @@ const NAVIGATION_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 // Hardening headers applied to every proxy response. The API origin is read at
 // runtime (bracket access so the bundler cannot inline it) so the CSP
 // connect-src matches whichever backend this container is pointed at.
-function securityHeaders(): Record<string, string> {
-  const apiOrigin =
-    process.env["API_URL"]?.trim() ||
-    process.env["NEXT_PUBLIC_API_URL"]?.trim() ||
-    "http://localhost:8010";
+function securityHeaders(nonce: string): Record<string, string> {
+  const apiOrigin = process.env["API_URL"]?.trim() || "http://localhost:8010";
+  const scriptSrc = `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${
+    process.env.NODE_ENV !== "production" ? " 'unsafe-eval'" : ""
+  }`;
   return {
     "X-Content-Type-Options": "nosniff",
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "X-Frame-Options": "DENY",
     "Permissions-Policy": "geolocation=(), camera=(), microphone=()",
-    "Content-Security-Policy":
-      `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ${apiOrigin}; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`,
+    "Content-Security-Policy": [
+      "default-src 'self'",
+      scriptSrc,
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob:",
+      "font-src 'self' data:",
+      `connect-src 'self' ${apiOrigin}`,
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+    ].join("; "),
   };
+}
+
+function applySecurityHeaders(
+  res: NextResponse,
+  headers: Record<string, string>,
+): NextResponse {
+  for (const [key, value] of Object.entries(headers)) {
+    res.headers.set(key, value);
+  }
+  return res;
 }
 
 // Decode the JWT payload (no signature check — just the exp claim) so routing
@@ -57,7 +77,11 @@ export function proxy(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(route + "/"),
   );
 
-  const headers = securityHeaders();
+  // Fresh nonce per request. It is embedded in the CSP via the request headers
+  // so Next can attach it to its own scripts, and is exposed to the app as
+  // x-nonce for manually written inline scripts.
+  const nonce = btoa(crypto.randomUUID());
+  const headers = securityHeaders(nonce);
 
   // A present-but-dead cookie is not an authenticated session. Treat it as
   // logged out so /login is reachable, and strip it so it stops being honored.
@@ -69,7 +93,10 @@ export function proxy(request: NextRequest) {
       // Not a navigation — fail it cleanly so it is never redirected onto
       // the login page. The router treats this as an auth failure and falls
       // back to a normal (GET) page navigation.
-      const res = NextResponse.json({ error: "Unauthorized" }, { status: 401, headers });
+      const res = applySecurityHeaders(
+        NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+        headers,
+      );
       if (token) clearAuthCookies(res);
       return res;
     }
@@ -81,7 +108,10 @@ export function proxy(request: NextRequest) {
     url.searchParams.set("session_expired", "1");
     // 303 forces the follow-up request to be GET, guaranteeing the login
     // page is always reached by GET regardless of the original method.
-    const res = NextResponse.redirect(url, { status: 303, headers });
+    const res = applySecurityHeaders(
+      NextResponse.redirect(url, { status: 303 }),
+      headers,
+    );
     if (token) clearAuthCookies(res);
     return res;
   }
@@ -91,19 +121,35 @@ export function proxy(request: NextRequest) {
     // submission before React attached preventDefault, or a client POST to
     // the current URL). The page has no method handler, so normalize to the
     // GET page instead of letting Next answer 405.
-    const res = NextResponse.redirect(request.nextUrl, { status: 303, headers });
+    const res = applySecurityHeaders(
+      NextResponse.redirect(request.nextUrl, { status: 303 }),
+      headers,
+    );
     if (token && !tokenAlive) clearAuthCookies(res);
     return res;
   }
 
   if (tokenAlive && isPublicRoute) {
-    return NextResponse.redirect(new URL("/dashboard", request.url), { status: 303, headers });
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL("/dashboard", request.url), { status: 303 }),
+      headers,
+    );
   }
 
-  // Serve the page. If a dead cookie rode along, clear it so the next public
-  // route visit doesn't bounce to /dashboard on a session that no longer
-  // exists.
-  const res = NextResponse.next({ headers });
+  // Serve the page. The request headers carry the nonce so Next can attach it
+  // to its framework and page scripts during rendering. If a dead cookie rode
+  // along, clear it so the next public route visit doesn't bounce to
+  // /dashboard on a session that no longer exists.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set(
+    "Content-Security-Policy",
+    headers["Content-Security-Policy"],
+  );
+  const res = applySecurityHeaders(
+    NextResponse.next({ request: { headers: requestHeaders } }),
+    headers,
+  );
   if (token && !tokenAlive) clearAuthCookies(res);
   return res;
 }

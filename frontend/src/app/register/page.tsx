@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { apiFetch, type TokenResponse } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -33,7 +33,7 @@ export default function RegisterPage() {
     }
 
     try {
-      await apiFetch<TokenResponse>("/auth/register", {
+      await apiFetch<{ message: string }>("/auth/register", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });

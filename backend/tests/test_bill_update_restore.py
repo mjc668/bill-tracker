@@ -269,7 +269,7 @@ def test_patch_restore_does_not_restore_past_tombstones(client_db):
     assert db.get(PaymentInstance, future_inst.id).is_deleted is False  # restored
 
 
-def test_patch_restore_cross_user_returns_403(client_db):
+def test_patch_restore_cross_user_returns_404(client_db):
     """Cross-user PATCH with restore flag is blocked."""
     client, db = client_db
     tok_a = register_and_login(client, "a2@test.com")
@@ -281,7 +281,7 @@ def test_patch_restore_cross_user_returns_403(client_db):
         json={"recreate_deleted_future": True},
         headers=auth(tok_b),
     )
-    assert r.status_code == 403
+    assert r.status_code == 404
 
 
 # ---------------------------------------------------------------------------

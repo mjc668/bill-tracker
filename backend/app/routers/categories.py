@@ -24,9 +24,11 @@ def list_categories(
     db: Session = Depends(get_db),
     me: User = Depends(current_user),
 ):
-    """List the user's categories (defaults first), seeding defaults if absent."""
-    categories_service.ensure_default_categories(db, me)
-    db.commit()
+    """List the user's categories (defaults first).
+
+    Read-only: defaults are seeded at registration and by the migration for
+    pre-existing users, so GET never writes.
+    """
     return categories_service.list_categories(
         db, me.id, include_archived=include_archived
     )

@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import current_user, optional_current_user
+from app.core.logging_utils import mask_email
 from app.core.ratelimit import rate_limited, rate_limited_by_user, rate_limited_key
 from app.core.security import (
     PasswordTooLongError,
@@ -363,7 +364,9 @@ def forgot_password(
     db.commit()
 
     if settings.smtp_host:
-        reset_url = f"{settings.app_base_url}/reset-password?token={raw_token}"
+        # Token in the fragment: fragments are not sent in the request line or
+        # Referer, so the raw token never reaches server/proxy logs.
+        reset_url = f"{settings.app_base_url}/reset-password#token={raw_token}"
         try:
             send_password_reset_email(
                 smtp_host=settings.smtp_host,
@@ -382,7 +385,11 @@ def forgot_password(
                 expires_minutes=settings.password_reset_token_expire_minutes,
             )
         except Exception:
-            _logger.exception("Failed to send password reset email to %s", user.email)
+            _logger.exception(
+                "Failed to send password reset email to %s (user %s)",
+                mask_email(user.email),
+                user.id,
+            )
 
     return _FORGOT_PASSWORD_RESPONSE
 

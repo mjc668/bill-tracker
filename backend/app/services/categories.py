@@ -123,8 +123,8 @@ def category_label(language: str | None, category: LabelableCategory) -> str:
 def ensure_default_categories(db: Session, user: User) -> None:
     """Idempotently create any of the nine defaults the user is missing.
 
-    Called on registration and from `GET /categories` so users migrated before
-    this table existed (or who somehow lost a row) always have their defaults.
+    Called on registration (and by the migration for pre-existing users) so
+    every account starts with the defaults; GET /categories is read-only.
     """
     existing = {
         row[0]

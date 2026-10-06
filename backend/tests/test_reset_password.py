@@ -79,6 +79,36 @@ def test_forgot_password_replaces_old_token(client_db):
     assert rows[0].token_hash != first_hash
 
 
+def test_forgot_password_reset_link_uses_url_fragment(client_db):
+    """The raw token travels in the fragment, never the query string."""
+    client, db = client_db
+    register_and_login(client, "fragment@example.com")
+
+    with (
+        patch("app.routers.auth.settings") as mock_settings,
+        patch("app.routers.auth.send_password_reset_email") as mock_send,
+    ):
+        mock_settings.smtp_host = "smtp.example.com"
+        mock_settings.smtp_port = 587
+        mock_settings.smtp_user = None
+        mock_settings.smtp_password = None
+        mock_settings.smtp_use_tls = True
+        mock_settings.reminder_from = ""
+        mock_settings.app_base_url = "http://localhost:3010"
+        mock_settings.password_reset_token_expire_minutes = 60
+
+        r = client.post("/auth/forgot-password", json={"email": "fragment@example.com"})
+
+    assert r.status_code == 200
+    reset_url = mock_send.call_args.kwargs["reset_url"]
+    assert reset_url.startswith("http://localhost:3010/reset-password#token=")
+    assert "?token=" not in reset_url
+
+    # The fragment token is the same one stored (hashed) for the reset call.
+    raw_token = reset_url.split("#token=", 1)[1]
+    assert db.query(PasswordResetToken).one().token_hash == _token_hash(raw_token)
+
+
 # ---------------------------------------------------------------------------
 # reset-password
 # ---------------------------------------------------------------------------

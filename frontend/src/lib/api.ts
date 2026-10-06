@@ -1,8 +1,3 @@
-export interface TokenResponse {
-  access_token: string;
-  token_type: string;
-}
-
 declare global {
   interface Window {
     // Runtime backend URL injected server-side from process.env.API_URL so a
@@ -14,9 +9,9 @@ declare global {
   }
 }
 
-// Resolve the backend base URL at call time: prefer the runtime override (set
-// from the container's .env by the server), then the build-time value if one
-// was baked, and finally a localhost default for local dev.
+// Resolve the backend base URL at call time: on the client prefer the runtime
+// override injected by the server; on the server read API_URL at request time.
+// A localhost default covers local dev.
 export function getApiBaseUrl(): string {
   if (
     typeof window !== "undefined" &&
@@ -24,11 +19,12 @@ export function getApiBaseUrl(): string {
   ) {
     return window.__PT_API_URL__;
   }
-  return process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:8010";
+  return process.env.API_URL?.trim() || "http://localhost:8010";
 }
 
-// Resolve the API path prefix at call time: prefer the runtime override (set
-// from the container's .env by the server), then the build-time value.
+// Resolve the API path prefix at call time: on the client prefer the runtime
+// override injected by the server; on the server read API_PREFIX at request
+// time.
 export function getApiPrefix(): string {
   if (
     typeof window !== "undefined" &&
@@ -36,7 +32,7 @@ export function getApiPrefix(): string {
   ) {
     return window.__PT_API_PREFIX__;
   }
-  return process.env.NEXT_PUBLIC_API_PREFIX?.trim() || "";
+  return process.env.API_PREFIX?.trim() || "";
 }
 
 export class SessionExpiredError extends Error {

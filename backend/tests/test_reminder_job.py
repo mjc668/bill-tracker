@@ -1,5 +1,6 @@
 """Unit tests for app/services/reminder_job.py."""
 
+import logging
 import smtplib
 from contextlib import contextmanager
 from datetime import date, datetime, timedelta, timezone
@@ -154,6 +155,29 @@ def test_upcoming_instance_sends_and_flips_flag(
     refreshed = db_session.get(PaymentInstance, inst_id)
     assert refreshed.reminder_sent_upcoming is True
     assert refreshed.reminder_sent_overdue is False
+
+
+@patch("app.services.reminder_job.send_monthly_summary_email")
+@patch("app.services.reminder_job.send_reminder_email")
+def test_reminder_logs_email_masked(
+    mock_send, _mock_summary, db_session, db_sessionmaker, caplog
+):
+    today = _today_utc()
+    user = _make_user(db_session, email="alice@example.com", notify_1_day_before=True)
+    bill = _make_bill(db_session, user.id)
+    _make_instance(db_session, bill.id, due_date=today + timedelta(days=1))
+    db_session.commit()
+
+    with (
+        _channels(),
+        caplog.at_level(logging.INFO, logger="app.services.reminder_job"),
+    ):
+        send_daily_reminders(db_sessionmaker, send_minute=480)
+
+    mock_send.assert_called_once()
+    messages = "\n".join(record.getMessage() for record in caplog.records)
+    assert "a***@example.com" in messages
+    assert "alice@example.com" not in messages
 
 
 @patch("app.services.reminder_job.send_monthly_summary_email")

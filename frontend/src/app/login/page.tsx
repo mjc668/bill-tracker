@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { apiFetch, type TokenResponse } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import { useNotifications } from "@/hooks/useNotifications";
 import { SESSION_EXPIRED_KEY } from "@/lib/auth";
@@ -63,7 +63,7 @@ export default function LoginPage() {
     const password = form.get("password") as string;
 
     try {
-      await apiFetch<TokenResponse>("/auth/login", {
+      await apiFetch<{ message: string }>("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });

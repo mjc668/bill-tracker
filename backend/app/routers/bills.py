@@ -80,10 +80,8 @@ def _resolve_category(
 def _get_scoped_instance(db: Session, instance_id: int, me: User) -> PaymentInstance:
     """Load an instance and enforce ownership through bill → template.user_id."""
     instance = db.get(PaymentInstance, instance_id)
-    if not instance:
+    if not instance or instance.template.user_id != me.id:
         raise HTTPException(status_code=404, detail="Payment instance not found")
-    if instance.template.user_id != me.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
     return instance
 
 
@@ -380,12 +378,8 @@ def delete_payment(
     me: User = Depends(current_user),
 ):
     instance = db.get(PaymentInstance, instance_id)
-    if not instance:
+    if not instance or instance.template.user_id != me.id:
         raise HTTPException(status_code=404, detail="Payment instance not found")
-
-    template = instance.template
-    if template.user_id != me.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
 
     instance.is_deleted = True
 
@@ -477,10 +471,8 @@ def update_bill(
     me: User = Depends(current_user),
 ):
     bill = db.get(BillTemplate, bill_id)
-    if not bill:
+    if not bill or bill.user_id != me.id:
         raise HTTPException(status_code=404, detail="Bill not found")
-    if bill.user_id != me.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
 
     from app.models.bill import BillFrequency as BF
 
@@ -631,9 +623,7 @@ def archive_bill(
     me: User = Depends(current_user),
 ):
     bill = db.get(BillTemplate, bill_id)
-    if not bill:
+    if not bill or bill.user_id != me.id:
         raise HTTPException(status_code=404, detail="Bill not found")
-    if bill.user_id != me.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
     bill.is_archived = True
     db.commit()

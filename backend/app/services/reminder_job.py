@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 from sqlalchemy.orm import Session, selectinload, sessionmaker
 
 from app.core.config import settings
+from app.core.logging_utils import mask_email
 from app.models.bill import BillTemplate, PaymentInstance, PaymentStatus
 from app.models.user import User
 from app.services import notifications
@@ -82,7 +83,11 @@ def send_monthly_summary_for_user(db: Session, user: User, month: str) -> bool:
     if not notifications.any_channel_configured():
         return False
     if _is_blocked_domain(user.email):
-        logger.debug("Skipping monthly summary for blocked domain: %s", user.email)
+        logger.debug(
+            "Skipping monthly summary for blocked domain: %s (user %s)",
+            mask_email(user.email),
+            user.id,
+        )
         return False
     lang = user.language_preference or "en"
     instances = (
@@ -162,15 +167,17 @@ def send_monthly_summary_for_user(db: Session, user: User, month: str) -> bool:
     )
     if result.ok:
         logger.info(
-            "Sent monthly summary to %s for %s via %s",
-            user.email,
+            "Sent monthly summary to %s (user %s) for %s via %s",
+            mask_email(user.email),
+            user.id,
             month,
             result.channel.value if result.channel else "unknown",
         )
         return True
     logger.error(
-        "Failed to send monthly summary to %s for %s: %s",
-        user.email,
+        "Failed to send monthly summary to %s (user %s) for %s: %s",
+        mask_email(user.email),
+        user.id,
         month,
         result.error,
     )
@@ -180,7 +187,11 @@ def send_monthly_summary_for_user(db: Session, user: User, month: str) -> bool:
 def send_reminders_for_user(db: Session, user: User) -> int:
     """Send due reminders for a single user. Returns count of emails sent."""
     if _is_blocked_domain(user.email):
-        logger.debug("Skipping reminders for blocked domain: %s", user.email)
+        logger.debug(
+            "Skipping reminders for blocked domain: %s (user %s)",
+            mask_email(user.email),
+            user.id,
+        )
         return 0
     now_utc = datetime.now(timezone.utc)
     today = now_utc.date()
@@ -423,9 +434,10 @@ def _send_and_flag(
     )
     if not result.ok:
         logger.error(
-            "Failed to send %s reminder to %s for instance %s: %s",
+            "Failed to send %s reminder to %s (user %s) for instance %s: %s",
             kind,
-            user.email,
+            mask_email(user.email),
+            user.id,
             instance.id,
             result.error,
         )
@@ -439,17 +451,19 @@ def _send_and_flag(
     except Exception as commit_exc:
         db.rollback()
         logger.critical(
-            "Notification sent to %s for instance %s but flag commit failed — "
-            "duplicate send possible on next run: %s",
-            user.email,
+            "Notification sent to %s (user %s) for instance %s but flag commit "
+            "failed — duplicate send possible on next run: %s",
+            mask_email(user.email),
+            user.id,
             instance.id,
             commit_exc,
         )
         return False
     logger.info(
-        "Sent %s reminder to %s for '%s' (instance %s) via %s",
+        "Sent %s reminder to %s (user %s) for '%s' (instance %s) via %s",
         kind,
-        user.email,
+        mask_email(user.email),
+        user.id,
         bill_name,
         instance.id,
         result.channel.value if result.channel else "unknown",

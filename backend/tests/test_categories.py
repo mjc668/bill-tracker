@@ -69,7 +69,8 @@ def test_get_categories_is_idempotent(client):
     assert first == second
 
 
-def test_get_categories_restores_a_missing_default(client):
+def test_get_categories_does_not_resurrect_a_deleted_default(client):
+    """GET is read-only: a deleted default must not be re-seeded by listing."""
     token = register_and_login(client, "cat_seed_missing@test.com")
     other_id = _default_id(client, token, "other")
 
@@ -77,7 +78,7 @@ def test_get_categories_restores_a_missing_default(client):
     assert r.status_code == 204
 
     cats = _categories(client, token)
-    assert "other" in [c["key"] for c in cats]
+    assert "other" not in [c["key"] for c in cats]
 
 
 def test_categories_are_scoped_per_user(client):

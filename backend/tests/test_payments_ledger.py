@@ -290,7 +290,7 @@ def test_delete_event_from_other_instance_returns_404(client):
     assert r.status_code == 404
 
 
-def test_delete_event_cross_user_returns_403(client):
+def test_delete_event_cross_user_returns_404(client):
     tok_a = register_and_login(client, "ledger_del_a@test.com")
     tok_b = register_and_login(client, "ledger_del_b@test.com")
     bill_id = _create_bill(client, tok_a)
@@ -301,17 +301,17 @@ def test_delete_event_cross_user_returns_403(client):
     payment_id = r.json()["payments"][0]["id"]
 
     r = _delete_event(client, tok_b, inst["id"], payment_id)
-    assert r.status_code == 403
+    assert r.status_code == 404
 
 
-def test_add_payment_other_user_returns_403(client):
+def test_add_payment_other_user_returns_404(client):
     tok_a = register_and_login(client, "ledger_add_a@test.com")
     tok_b = register_and_login(client, "ledger_add_b@test.com")
     bill_id = _create_bill(client, tok_a)
     inst = _seed_instance(client, tok_a, bill_id)
 
     r = _add_payment(client, tok_b, inst["id"], "10.00")
-    assert r.status_code == 403
+    assert r.status_code == 404
 
 
 # ---------------------------------------------------------------------------

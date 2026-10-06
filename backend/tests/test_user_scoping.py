@@ -65,11 +65,11 @@ def test_list_payments_scoped(client):
 
 
 # ---------------------------------------------------------------------------
-# Mutation endpoints — must return 403 for cross-user access
+# Mutation endpoints — must return 404 for cross-user access (no existence oracle)
 # ---------------------------------------------------------------------------
 
 
-def test_mark_paid_other_user_returns_403(client):
+def test_mark_paid_other_user_returns_404(client):
     tok_a = register_and_login(client, "a@test.com")
     tok_b = register_and_login(client, "b@test.com")
 
@@ -81,10 +81,10 @@ def test_mark_paid_other_user_returns_403(client):
         json={"paid_amount": None, "notes": None},
         headers=auth(tok_b),
     )
-    assert r.status_code == 403
+    assert r.status_code == 404
 
 
-def test_revert_payment_other_user_returns_403(client):
+def test_revert_payment_other_user_returns_404(client):
     tok_a = register_and_login(client, "a@test.com")
     tok_b = register_and_login(client, "b@test.com")
 
@@ -102,10 +102,10 @@ def test_revert_payment_other_user_returns_403(client):
         f"/bills/payments/{instance_id}/unpay",
         headers=auth(tok_b),
     )
-    assert r.status_code == 403
+    assert r.status_code == 404
 
 
-def test_update_bill_other_user_returns_403(client):
+def test_update_bill_other_user_returns_404(client):
     tok_a = register_and_login(client, "a@test.com")
     tok_b = register_and_login(client, "b@test.com")
 
@@ -116,20 +116,20 @@ def test_update_bill_other_user_returns_403(client):
         json={"name": "Hacked"},
         headers=auth(tok_b),
     )
-    assert r.status_code == 403
+    assert r.status_code == 404
 
 
-def test_archive_bill_other_user_returns_403(client):
+def test_archive_bill_other_user_returns_404(client):
     tok_a = register_and_login(client, "a@test.com")
     tok_b = register_and_login(client, "b@test.com")
 
     bill_id = _create_bill(client, tok_a)
 
     r = client.post(f"/bills/{bill_id}/archive", headers=auth(tok_b))
-    assert r.status_code == 403
+    assert r.status_code == 404
 
 
-def test_delete_payment_other_user_returns_403(client):
+def test_delete_payment_other_user_returns_404(client):
     tok_a = register_and_login(client, "a@test.com")
     tok_b = register_and_login(client, "b@test.com")
 
@@ -137,7 +137,7 @@ def test_delete_payment_other_user_returns_403(client):
     instance_id = _seed_payment(client, tok_a, bill_id)
 
     r = client.delete(f"/bills/payments/{instance_id}", headers=auth(tok_b))
-    assert r.status_code == 403
+    assert r.status_code == 404
 
 
 # ---------------------------------------------------------------------------

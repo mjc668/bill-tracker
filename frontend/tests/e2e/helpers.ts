@@ -47,7 +47,7 @@ export async function loginNewUser(page: Page): Promise<{ email: string; passwor
     ? (JSON.parse(fs.readFileSync(E2E_USERS_FILE, 'utf-8')) as Array<{ email: string; token: string }>)
     : [];
   existing.push({ email, token });
-  fs.writeFileSync(E2E_USERS_FILE, JSON.stringify(existing));
+  fs.writeFileSync(E2E_USERS_FILE, JSON.stringify(existing), { mode: 0o600 });
 
   return { email, password };
 }

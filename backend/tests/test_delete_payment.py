@@ -151,7 +151,7 @@ def test_delete_payment_not_found(client_db):
     assert r.status_code == 404
 
 
-def test_delete_future_cross_user_returns_403(client_db):
+def test_delete_future_cross_user_returns_404(client_db):
     """delete_future=true is still blocked for cross-user access."""
     client, db = client_db
     tok_a = register_and_login(client, "a@test.com")
@@ -161,4 +161,4 @@ def test_delete_future_cross_user_returns_403(client_db):
     i = _insert_instance(db, bill_id, "2026-06", date(2026, 6, 15))
 
     r = client.delete(f"/bills/payments/{i.id}?delete_future=true", headers=auth(tok_b))
-    assert r.status_code == 403
+    assert r.status_code == 404
