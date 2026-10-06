@@ -1,7 +1,7 @@
 [project]
-name = "backend"
+name = "bill-tracker-backend"
 version = "2.6.0"
-description = "Pay Tracker backend — FastAPI + SQLAlchemy + Alembic"
+description = "Bill Tracker backend — FastAPI + SQLAlchemy + Alembic"
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.18.4",

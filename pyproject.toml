@@ -1,5 +1,5 @@
 [project]
-name = "pay-tracker"
+name = "bill-tracker"
 version = "2.6.0"
 requires-python = ">=3.13"
 dependencies = [

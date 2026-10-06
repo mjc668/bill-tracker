@@ -1,6 +1,6 @@
 # Security Policy
 
-Pay Tracker is a self-hosted household application maintained by a small team.
+Bill Tracker is a self-hosted household application maintained by a small team.
 We take security reports seriously and appreciate responsible disclosure.
 
 ## Reporting a vulnerability
@@ -22,7 +22,7 @@ Please include:
 
 ## Scope
 
-**In scope:** the Pay Tracker application in this repository — frontend, backend,
+**In scope:** the Bill Tracker application in this repository — frontend, backend,
 Docker images, compose files, backup/restore scripts, and the CI workflows.
 
 **Out of scope:** vulnerabilities in third-party dependencies (report those

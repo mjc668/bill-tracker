@@ -1,4 +1,4 @@
-# Reference Caddy config for the pay-tracker deployment model.
+# Reference Caddy config for the bill-tracker deployment model.
 #
 # - Caddy terminates HTTPS and serves the Next.js frontend.
 # - /api/* is reverse-proxied to the FastAPI backend with the /api prefix

@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pay Tracker",
+  title: "Bill Tracker",
   description: "Household bill tracking made simple",
   themeColor: "#2563eb",
 };

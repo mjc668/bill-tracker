@@ -29,7 +29,7 @@ services:
       - no-new-privileges:true
 
   backend:
-    image: pay-tracker-backend:latest
+    image: bill-tracker-backend:latest
     build: ./backend
     container_name: backend
     restart: unless-stopped
@@ -55,7 +55,7 @@ services:
       - no-new-privileges:true
 
   frontend:
-    image: pay-tracker-frontend:latest
+    image: bill-tracker-frontend:latest
     build:
       context: ./frontend
       args:

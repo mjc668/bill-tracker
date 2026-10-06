@@ -82,9 +82,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center gap-2">
-          <Image src="/pt-logo.png" alt="Pay Tracker" width={80} height={80} className="rounded-2xl shadow-md" priority />
+          <Image src="/pt-logo.png" alt="Bill Tracker" width={80} height={80} className="rounded-2xl shadow-md" priority />
           <h1 className="text-2xl tracking-tight text-green-700 dark:text-green-500">
-            <span className="font-normal">Pay</span><span className="font-bold">Tracker</span>
+            <span className="font-normal">Bill</span><span className="font-bold">Tracker</span>
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {t("loginSubtitle")}

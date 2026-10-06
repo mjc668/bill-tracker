@@ -47,7 +47,7 @@
         "signedInAs": "Zalogowany jako"
     },
     "Dashboard": {
-        "title": "Witaj w Pay Tracker",
+        "title": "Witaj w Bill Tracker",
         "subtitle": "Zarządzaj rachunkami domowymi w jednym miejscu.",
         "paymentsTitle": "Płatności",
         "paymentsDesc": "Przeglądaj i oznaczaj rachunki z tego miesiąca jako opłacone",
@@ -333,7 +333,7 @@
     "BackupButton": {
         "ariaLabel": "Pobierz kopię zapasową",
         "dialogTitle": "Pobierz kopię zapasową",
-        "dialogDescription": "Zostanie pobrana pełna kopia danych Pay Tracker — szablony rachunków, historia płatności i konta użytkowników. Przechowuj plik w bezpiecznym miejscu.",
+        "dialogDescription": "Zostanie pobrana pełna kopia danych Bill Tracker — szablony rachunków, historia płatności i konta użytkowników. Przechowuj plik w bezpiecznym miejscu.",
         "cancel": "Anuluj",
         "confirm": "Pobierz",
         "downloading": "Pobieranie…",
@@ -404,7 +404,7 @@
             "masterToggle": "Włącz powiadomienia",
             "setupTitle": "Jak zainstalować i podłączyć Apprise",
             "setupAppriseIntro": "Apprise to podstawowy kanał dostarczania. Uruchom bramkę Apprise API i ustaw APPRISE_BASE_URL w pliku .env backendu — bramka może sama przechowywać adresy docelowe.",
-            "setupGatewayNote": "Zalecane obrazy: caronc/apprise lub lscr.io/linuxserver/apprise-api. Uwaga: apprise-go to tylko CLI bez serwera HTTP — wymaga nakładki, zanim Pay Tracker będzie mógł go wywołać.",
+            "setupGatewayNote": "Zalecane obrazy: caronc/apprise lub lscr.io/linuxserver/apprise-api. Uwaga: apprise-go to tylko CLI bez serwera HTTP — wymaga nakładki, zanim Bill Tracker będzie mógł go wywołać.",
             "setupMinimalLabel": "1. Uruchom bramkę i ustaw minimum (.env)",
             "setupOptionalLabel": "2. Opcjonalnie: adresy docelowe lub zapisany klucz (.env)",
             "setupReachability": "Kontener backendu musi mieć dostęp do bramki — użyj adresu IP hosta lub wspólnej sieci Docker (localhost wskazuje na sam backend). Następnie użyj przycisku „Wyślij powiadomienie testowe” powyżej.",
@@ -460,7 +460,7 @@
         },
         "backup": {
             "title": "Kopia zapasowa",
-            "description": "Pobierz pełną kopię wszystkich danych Pay Tracker jako plik JSON."
+            "description": "Pobierz pełną kopię wszystkich danych Bill Tracker jako plik JSON."
         },
         "restore": {
             "title": "Przywracanie danych",

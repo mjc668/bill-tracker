@@ -1,6 +1,6 @@
-# Pay Tracker
+# Bill Tracker
 
-A self-hosted household bill tracking PWA. Define your recurring bills once, then each month's payment instances are generated automatically. Mark bills paid from any device — phone, tablet, or desktop.
+A self-hosted household bill tracking PWA. Define your recurring bills once, then each period's payment instances are generated automatically. Track what's paid from any device — phone, tablet, or desktop.
 
 No third-party data sharing. No subscription. Runs locally with Docker Compose or in the cloud. Each user's data is fully isolated.
 
@@ -18,17 +18,19 @@ No third-party data sharing. No subscription. Runs locally with Docker Compose o
 
 ## What it does
 
-- **Bill templates** — define a bill once: name, category, amount, currency, recurrence frequency, due day of month. Pay Tracker generates payment instances automatically each period.
-- **Category grouping** — bills and payments are grouped under predefined category headers (Housing, Utilities, Insurance, Subscriptions, Entertainment, Transport, Healthcare, Education, Other). Category is required on every bill.
-- **Payment tracking** — view upcoming, overdue, and paid bills for any month, grouped by category. Mark as paid with an optional amount override and note. Revert if you made a mistake.
-- **Email reminders** — optional. Configure SMTP credentials and a send time (30-minute precision) and the app emails you before or after each bill's due date.
-- **Monthly summary email** — optional. On the last day of each month, receive a full summary of what was paid (amount due vs. paid, date) and what was missed, with totals. Toggle it in Settings → Email Notifications. A "Send monthly summary now" button lets you request the current month's snapshot on demand.
-- **Email sent indicator** — each payment row shows an `@` icon: gray if no reminder has been sent, amber if one was sent. Click it to see the exact timestamp.
-- **Export & backup** — download payment history as `.xlsx` (one sheet per month) or a full JSON backup. Restore from backup at any time.
-- **Restore safety net** — before confirming a restore, see a comparison of your current data vs. the backup file (bill/payment counts, backup export date), with a warning if the backup would reduce your data. The server also auto-snapshots your current data immediately before any restore executes, so a mistaken restore can be undone from Settings — even if you proceeded past the warning or called the API directly.
+- **Multiple household users** — register separate accounts for each family member; every account's bills, payments, categories and settings are fully isolated.
+- **Recurring bills** — define a bill once: name, category, amount, currency, recurrence (weekly / every-N weeks, monthly / every-N months, yearly / every-N years, or one-off) with an optional occurrence limit. Bill Tracker generates payment instances automatically each period.
+- **Payment ledger** — mark a payment as paid with partial amounts, an actual payment date, and a note; over/underpayments are visible against the expected amount, and reverting a payment removes it.
+- **Archive, never delete** — archiving a template hides it from active views while preserving its payment history.
+- **Dashboard** — rolling windows with overdue aging, bills-vs-payments chart, upcoming forecast, and category breakdown.
+- **Payments calendar and filters** — browse any month as a calendar or list, and filter payments by status, category, or bill.
+- **Editable, translatable categories** — add, rename, reorder and archive categories in Settings; defaults cover common household bills.
+- **XLSX export** — download payment history as `.xlsx` (one sheet per month).
+- **JSON backup & restore** — full per-user backup and restore, with pre-restore snapshots so a mistaken restore can be undone.
+- **Email reminders + monthly summary** — optional scheduled reminders around each due date and a monthly paid/unpaid summary, delivered through an Apprise API gateway with SMTP as an optional fallback.
 - **Password reset** — optional. When SMTP is configured, a "Forgot password?" link appears on the login page. Users receive a secure one-time reset link by email (expires after 60 minutes by default).
 - **Multilingual** — English, Polish, German. Language is saved per account.
-- **Installable as PWA** — works offline-first on mobile and desktop.
+- **Installable PWA** — installs on mobile and desktop. The service worker is network-only (no offline cache), so the app always loads current data and requires connectivity.
 
 
 ## Quick start without cloning
@@ -36,13 +38,13 @@ No third-party data sharing. No subscription. Runs locally with Docker Compose o
 Pull the published images from GitHub Container Registry and run the app with just two files — no repo clone required.
 
 ```bash
-mkdir pay-tracker && cd pay-tracker
-curl -O https://raw.githubusercontent.com/mjc668/pay-tracker/main/docker-compose.prod.yml
-curl -O https://raw.githubusercontent.com/mjc668/pay-tracker/main/.env.example
+mkdir bill-tracker && cd bill-tracker
+curl -O https://raw.githubusercontent.com/mjc668/bill-tracker/main/docker-compose.prod.yml
+curl -O https://raw.githubusercontent.com/mjc668/bill-tracker/main/.env.example
 cp .env.example .env
 ```
 
-Edit `.env` and set a strong `POSTGRES_PASSWORD` and `JWT_SECRET` — the stack refuses to start while either is empty (generate each with `openssl rand -hex 24`). `PAY_TRACKER_VERSION` is pre-set to the current release; change it if you want a different one, then:
+Edit `.env` and set a strong `POSTGRES_PASSWORD` and `JWT_SECRET` — the stack refuses to start while either is empty (generate each with `openssl rand -hex 24`). `BILL_TRACKER_VERSION` is pre-set to the current release; change it if you want a different one, then:
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d
@@ -57,12 +59,12 @@ To try it with pre-seeded demo data instead of starting empty:
 docker compose -f docker-compose.prod.yml --profile demo up -d
 ```
 
-`PAY_TRACKER_VERSION` is required — there is no implicit `:latest`. Set it in `.env` or per-command (e.g. `PAY_TRACKER_VERSION=2.6.0 docker compose -f docker-compose.prod.yml up -d`).
+`BILL_TRACKER_VERSION` is required — there is no implicit `:latest`. Set it in `.env` or per-command (e.g. `BILL_TRACKER_VERSION=3.0.0 docker compose -f docker-compose.prod.yml up -d`).
 
 
 ## Getting started
 
-The steps below build the images from source — use this if you're developing Pay Tracker or want to run unreleased changes. If you just want to run the app, see [Quick start without cloning](#quick-start-without-cloning) above.
+The steps below build the images from source — use this if you're developing Bill Tracker or want to run unreleased changes. If you just want to run the app, see [Quick start without cloning](#quick-start-without-cloning) above.
 
 ### 1. Set up environment
 
@@ -87,17 +89,19 @@ Open http://localhost:3010 and register. Each account is isolated — register s
 
 ### 4. Add your first bill
 
-Go to **Bills → New Bill**. Fill in the name, category, amount, frequency, and due day of month. Save it — Pay Tracker will generate this month's payment instance automatically.
+Go to **Bills → New Bill**. Fill in the name, category, amount, recurrence, and due date. Save it — Bill Tracker will generate this period's payment instance automatically.
 
 ### 5. Track payments
 
-Go to **Payments**. Use the month selector to browse any period. Click **Mark as Paid** when a bill is settled. The next month's instance is created automatically for recurring bills.
+Go to **Payments**. Use the month selector to browse any period. Click **Mark as Paid** when a bill is settled — you can record a partial amount, the actual date, and a note. Upcoming instances are created automatically for recurring bills.
 
-### 6. Set up email reminders (optional)
+### 6. Set up notifications (optional)
 
-Add SMTP credentials to `.env` (see the `# Reminders` section in `.env.example`), then restart. Go to **Settings → Email Notifications** to configure when reminders are sent and which timing windows to use (2 days before, 1 day before, on the day, 1 day after).
+The recommended channel is an [Apprise](https://github.com/caronc/apprise) API gateway: run the `caronc/apprise` or `lscr.io/linuxserver/apprise-api` image and point `APPRISE_BASE_URL` in `.env` at it (see the `# Notifications` section in `.env.example`), then use **Settings → Email Notifications** to send a test and configure when reminders go out (2 days before, 1 day before, on the day, 1 day after).
 
-The settings page also shows the current server time (UTC) so you can set the send time relative to your timezone.
+SMTP is an optional legacy fallback and is still required for password reset. Add the `SMTP_*` values to `.env` and restart to enable it.
+
+The settings page also shows the current server time (UTC) so you can set send times relative to your timezone.
 
 
 ## Environment variables
@@ -106,10 +110,14 @@ The settings page also shows the current server time (UTC) so you can set the se
 | --- | --- | --- |
 | `POSTGRES_PASSWORD` | yes | PostgreSQL password — generate with `openssl rand -hex 24`; an empty value aborts the stack |
 | `JWT_SECRET` | yes | JWT signing secret — use a long random string |
-| `PAY_TRACKER_VERSION` | yes (prod compose) | Released image tag to run, e.g. `2.6.0` — there is no implicit `:latest` |
+| `BILL_TRACKER_VERSION` | yes (prod compose) | Released image tag to run, e.g. `3.0.0` — there is no implicit `:latest` |
 | `DATABASE_URL` | yes | PostgreSQL connection string |
 | `NEXT_PUBLIC_API_URL` | yes | Backend URL as seen by the browser |
-| `SMTP_HOST` | no | SMTP server for email reminders |
+| `APPRISE_BASE_URL` | no | Apprise API gateway base URL (recommended notification channel) |
+| `APPRISE_KEY` | no | Stateful config key inside the Apprise gateway |
+| `APPRISE_URLS` | no | Stateless Apprise targets passed per request, e.g. `ntfy://topic discord://webhook_id/webhook_token` |
+| `APPRISE_TIMEOUT_SECONDS` | no | Timeout for Apprise gateway requests (default: 10) |
+| `SMTP_HOST` | no | SMTP server for email reminders and password reset |
 | `SMTP_PORT` | no | SMTP port (default: 587) |
 | `SMTP_USER` | no | SMTP login |
 | `SMTP_PASSWORD` | no | SMTP password |
@@ -125,7 +133,7 @@ Copy `.env.example` to `.env`. Never commit `.env`.
 
 - **Frontend:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, next-intl
 - **Backend:** FastAPI, Python 3.13, SQLAlchemy 2.0, Alembic, Pydantic v2
-- **Database:** PostgreSQL 17 (co-located in the backend container)
+- **Database:** PostgreSQL 17 as a separate `postgres` service with a named volume
 - **Runtime:** Docker Compose
 
 
@@ -147,7 +155,9 @@ cd backend && uv run uvicorn app.main:app --reload
 # Lint
 cd frontend && npm run lint
 
-# Backend tests
+# Backend format check, types, tests
+cd backend && uv run black --check --target-version py313 .
+cd backend && uv run mypy app
 cd backend && uv run pytest tests/ -v
 
 # New DB migration after changing a model
@@ -157,13 +167,20 @@ docker compose exec backend uv run alembic revision --autogenerate -m "describe 
 > **Migration note:** Always read the generated migration file before applying — autogenerate can miss new columns. For renames, write `add_column` + `UPDATE` + `drop_column` manually instead of relying on `alter_column(new_column_name=...)`.
 
 
+## Deployment
+
+The production compose file binds the frontend and backend to localhost only; put a TLS-terminating reverse proxy (Caddy, nginx + Certbot, or Cloudflare) in front. PostgreSQL runs as its own `postgres` service with a named volume — the database is not co-located in the backend container.
+
+Full guides for Caddy, nginx + Certbot, and Cloudflare — including HTTPS/PWA requirements — are in [`context/foundation/infrastructure.md`](context/foundation/infrastructure.md#https--pwa-deployment).
+
+
 ## Installing as a PWA
 
-- **Chrome / Brave (desktop):** install icon (⊕) in the address bar, or browser menu → Install Pay Tracker
+- **Chrome / Brave (desktop):** install icon (⊕) in the address bar, or browser menu → Install Bill Tracker
 - **Android:** browser menu (⋮) → Add to Home screen
 - **iOS Safari:** Share (⎋) → Add to Home Screen
 
-Requires HTTPS in production. Localhost works as an exception in most browsers. Setup guides for Caddy, nginx + Certbot, and Cloudflare are in [`context/foundation/infrastructure.md`](context/foundation/infrastructure.md#https--pwa-deployment).
+Requires HTTPS in production. Localhost works as an exception in most browsers.
 
 
 ## Export & backup
@@ -172,3 +189,21 @@ Requires HTTPS in production. Localhost works as an exception in most browsers. 
 - **JSON backup** — Settings → Download Backup. Full data export scoped to your account.
 - **Restore** — Settings → Restore from Backup. Shows a comparison of your current data vs. the backup (bill/payment counts, export date) before you confirm, then atomically replaces your data. Accepts `schema_version` 2–6.
 - **Undo a restore** — every restore automatically snapshots your prior data server-side first (skipped if you had no existing bills). If a restore turns out to be a mistake, Settings → Restore shows a "Restore This Snapshot" option with the snapshot's timestamp, letting you revert. Snapshots are kept for `RESTORE_SNAPSHOT_RETENTION_DAYS` (default 7) and only the single most recent one is retained per account.
+
+
+## Upgrading from Pay Tracker 2.x
+
+Bill Tracker is the renamed and extended continuation of Pay Tracker. When upgrading from Pay Tracker 2.x:
+
+- Image and package names changed: `pay-tracker-*` → `bill-tracker-*`. Use the new `ghcr.io/mjc668/bill-tracker-*` images.
+- `PAY_TRACKER_VERSION` is now `BILL_TRACKER_VERSION` in `.env`.
+- The JWT issuer/audience changed, so all existing sessions are invalidated — every user has to log in again. The session-expiry flow handles this gracefully.
+- `POST /auth/login` and `POST /auth/register` no longer return the token in the response body; the JWT is delivered as an HttpOnly cookie only.
+- The database schema and the `postgres` data volume are unchanged — existing data carries over.
+
+
+## Credits
+
+Bill Tracker is a rework and extension of **Pay Tracker** by Mariusz Winiarz — https://github.com/marwin87/pay-tracker — released under the MIT License. Thanks for the original concept and implementation.
+
+This project adds the payment ledger, editable categories, generalized recurrence, dashboard/statistics, Apprise notifications, and other changes. The upstream MIT notice and the modifications notice are preserved in [LICENSE](LICENSE). If you use this software in a public-facing application, a clear link or attribution back to the original project is appreciated.

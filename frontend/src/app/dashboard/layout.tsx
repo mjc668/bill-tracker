@@ -82,9 +82,9 @@ export default function DashboardLayout({
             href="/dashboard"
             className="flex items-center gap-2 text-green-700 transition-opacity hover:opacity-80 dark:text-green-500"
           >
-            <Image src="/pt-logo.png" alt="Pay Tracker" width={32} height={32} className="rounded-xl" />
+            <Image src="/pt-logo.png" alt="Bill Tracker" width={32} height={32} className="rounded-xl" />
             <span className="text-lg tracking-tight">
-              <span className="font-normal">Pay</span><span className="font-bold">Tracker</span>
+              <span className="font-normal">Bill</span><span className="font-bold">Tracker</span>
             </span>
           </Link>
 

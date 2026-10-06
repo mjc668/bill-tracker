@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pay Tracker postgres backup script.
+# Bill Tracker postgres backup script.
 #
 # Usage: chmod +x backup.sh && ./backup.sh
 #

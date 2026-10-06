@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-Pay Tracker is a household bill-tracking PWA. Stack: Next.js 16 (App Router, TypeScript, Tailwind) frontend, FastAPI + Python 3.13 backend, PostgreSQL 17 co-located in the backend container.
+Bill Tracker is a household bill-tracking PWA. Stack: Next.js 16 (App Router, TypeScript, Tailwind) frontend, FastAPI + Python 3.13 backend, PostgreSQL 17 as a separate `postgres` service in Docker Compose.
 
 ## Hard Rules
 
