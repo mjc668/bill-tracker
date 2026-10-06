@@ -50,12 +50,23 @@ _COMMON_PASSWORDS: frozenset[str] = frozenset(
 )
 
 
+class PasswordTooLongError(ValueError):
+    """Raised when a password exceeds bcrypt's 72-byte input limit."""
+
+
 def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    try:
+        return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    except ValueError as exc:
+        raise PasswordTooLongError("Password exceeds bcrypt's 72-byte limit") from exc
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return bcrypt.checkpw(plain.encode(), hashed.encode())
+    try:
+        return bcrypt.checkpw(plain.encode(), hashed.encode())
+    except ValueError:
+        # Malformed hash or an over-long password: never a valid credential.
+        return False
 
 
 def validate_password_strength(password: str) -> None:
@@ -77,13 +88,17 @@ def create_access_token(subject: str, *, token_version: int = 0) -> str:
         "iat": now,
         "exp": expire,
     }
-    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    return jwt.encode(
+        payload,
+        settings.jwt_secret.get_secret_value(),
+        algorithm=settings.jwt_algorithm,
+    )
 
 
 def decode_token(token: str) -> dict:
     payload = jwt.decode(
         token,
-        settings.jwt_secret,
+        settings.jwt_secret.get_secret_value(),
         algorithms=[settings.jwt_algorithm],
         audience=_JWT_AUDIENCE,
         issuer=_JWT_ISSUER,

@@ -21,6 +21,9 @@ class DeliveryResult:
     ok: bool
     channel: NotificationChannel | None = None
     error: str | None = None
+    # Which channel produced `error` (None for configuration errors); lets
+    # callers redact channel-specific diagnostics before returning them.
+    source: NotificationChannel | None = None
 
 
 def apprise_configured() -> bool:
@@ -35,7 +38,11 @@ def send_via_apprise(
     *, title: str, body: str, notify_type: str = "info"
 ) -> DeliveryResult:
     if not apprise_configured():
-        return DeliveryResult(ok=False, error="apprise not configured")
+        return DeliveryResult(
+            ok=False,
+            error="apprise not configured",
+            source=NotificationChannel.apprise,
+        )
 
     base_url = (settings.apprise_base_url or "").rstrip("/")
     if settings.apprise_key:
@@ -62,7 +69,9 @@ def send_via_apprise(
             url, json=payload, timeout=settings.apprise_timeout_seconds
         )
     except httpx.HTTPError as exc:
-        return DeliveryResult(ok=False, error=str(exc))
+        return DeliveryResult(
+            ok=False, error=str(exc), source=NotificationChannel.apprise
+        )
 
     if response.is_success:
         return DeliveryResult(ok=True, channel=NotificationChannel.apprise)
@@ -70,7 +79,7 @@ def send_via_apprise(
     detail = f"apprise HTTP {response.status_code}"
     if snippet:
         detail = f"{detail}: {snippet}"
-    return DeliveryResult(ok=False, error=detail)
+    return DeliveryResult(ok=False, error=detail, source=NotificationChannel.apprise)
 
 
 def deliver(
@@ -97,7 +106,9 @@ def deliver(
             email_sender()
         except (smtplib.SMTPException, OSError) as exc:
             logger.warning("Email delivery failed: %s", exc)
-            return DeliveryResult(ok=False, error=str(exc))
+            return DeliveryResult(
+                ok=False, error=str(exc), source=NotificationChannel.email
+            )
         return DeliveryResult(ok=True, channel=NotificationChannel.email)
 
     if apprise_result is not None:

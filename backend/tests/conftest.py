@@ -26,12 +26,14 @@ from app.core.config import settings as _settings
 
 for _scope in (
     "login",
+    "login_account",
     "register",
     "forgot_password",
     "reset_password",
     "change_password",
     "change_email",
     "send_now",
+    "restore",
 ):
     setattr(_settings, f"{_scope}_rate_limit", 100000)
 
@@ -109,10 +111,14 @@ def client_db(postgres_engine):
 def register_and_login(
     client: TestClient, email: str, password: str = "pw123456"
 ) -> str:
-    """Register a user and return their Bearer token."""
+    """Register a user and return their Bearer token.
+
+    The JWT is no longer returned in the body: it is set as an HttpOnly
+    cookie, which the TestClient exposes on the response.
+    """
     r = client.post("/auth/register", json={"email": email, "password": password})
     assert r.status_code == 201, r.text
-    return r.json()["access_token"]
+    return r.cookies["access_token"]
 
 
 def auth(token: str) -> dict:

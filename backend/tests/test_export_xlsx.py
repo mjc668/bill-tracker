@@ -3,6 +3,7 @@
 import io
 
 import openpyxl
+import pytest
 
 from tests.conftest import auth, register_and_login, sync_payments
 
@@ -119,6 +120,40 @@ def test_xlsx_exports_custom_category_name(client):
     r = client.get("/export/xlsx", headers=auth(tok))
     assert r.status_code == 200
     assert _category_column(r.content) == ["Streaming"]
+
+
+def test_xlsx_formula_injection_is_neutralized(client):
+    """A bill name starting with '=' must be written as a plain string cell."""
+    tok = register_and_login(client, "xlsx_formula@test.com")
+
+    payload = {**_BILL_A, "name": '=HYPERLINK("http://evil","x")'}
+    r = client.post("/bills", json=payload, headers=auth(tok))
+    assert r.status_code == 201, r.text
+    sync_payments(client, tok)
+
+    r = client.get("/export/xlsx", headers=auth(tok))
+    assert r.status_code == 200
+
+    wb = openpyxl.load_workbook(io.BytesIO(r.content))
+    formula_cells = [
+        cell
+        for ws in wb.worksheets
+        if ws.max_row and ws.max_row > 1
+        for row in ws.iter_rows(min_row=2)
+        for cell in row
+        if isinstance(cell.value, str) and "HYPERLINK" in cell.value
+    ]
+    assert formula_cells
+    for cell in formula_cells:
+        assert cell.data_type != "f"
+        assert cell.data_type == "s"
+
+
+@pytest.mark.parametrize("year", [1999, 2101])
+def test_xlsx_year_out_of_range_returns_422(client, year):
+    tok = register_and_login(client, f"xlsx_year_{year}@test.com")
+    r = client.get(f"/export/xlsx?year={year}", headers=auth(tok))
+    assert r.status_code == 422
 
 
 def test_xlsx_partial_deletion(client):

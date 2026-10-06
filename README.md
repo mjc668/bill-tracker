@@ -42,7 +42,7 @@ curl -O https://raw.githubusercontent.com/mjc668/pay-tracker/main/.env.example
 cp .env.example .env
 ```
 
-Edit `.env` and set a strong `JWT_SECRET`, then:
+Edit `.env` and set a strong `POSTGRES_PASSWORD` and `JWT_SECRET` — the stack refuses to start while either is empty (generate each with `openssl rand -hex 24`). `PAY_TRACKER_VERSION` is pre-set to the current release; change it if you want a different one, then:
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d
@@ -57,7 +57,7 @@ To try it with pre-seeded demo data instead of starting empty:
 docker compose -f docker-compose.prod.yml --profile demo up -d
 ```
 
-Pin a specific released version instead of the latest one by setting `PAY_TRACKER_VERSION` (e.g. `PAY_TRACKER_VERSION=2.2.0 docker compose -f docker-compose.prod.yml up -d`).
+`PAY_TRACKER_VERSION` is required — there is no implicit `:latest`. Set it in `.env` or per-command (e.g. `PAY_TRACKER_VERSION=2.6.0 docker compose -f docker-compose.prod.yml up -d`).
 
 
 ## Getting started
@@ -70,7 +70,7 @@ The steps below build the images from source — use this if you're developing P
 cp .env.example .env
 ```
 
-Edit `.env` and set a strong `JWT_SECRET`. Everything else works with the defaults for local use.
+Edit `.env` and set a strong `POSTGRES_PASSWORD` and `JWT_SECRET` (generate each with `openssl rand -hex 24`). Everything else works with the defaults for local use.
 
 ### 2. Start the app
 
@@ -104,7 +104,9 @@ The settings page also shows the current server time (UTC) so you can set the se
 
 | Variable | Required | Description |
 | --- | --- | --- |
+| `POSTGRES_PASSWORD` | yes | PostgreSQL password — generate with `openssl rand -hex 24`; an empty value aborts the stack |
 | `JWT_SECRET` | yes | JWT signing secret — use a long random string |
+| `PAY_TRACKER_VERSION` | yes (prod compose) | Released image tag to run, e.g. `2.6.0` — there is no implicit `:latest` |
 | `DATABASE_URL` | yes | PostgreSQL connection string |
 | `NEXT_PUBLIC_API_URL` | yes | Backend URL as seen by the browser |
 | `SMTP_HOST` | no | SMTP server for email reminders |

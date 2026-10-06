@@ -93,7 +93,7 @@ Note: `unraid/apprise-go` is a CLI-only port with no HTTP server — run `caronc
 
 | Env var | Default | Meaning |
 |---|---|---|
-| `APPRISE_BASE_URL` | — | Apprise API base URL, e.g. `http://10.112.200.5:8000` (trailing `/` stripped) |
+| `APPRISE_BASE_URL` | — | Apprise API base URL, e.g. `http://apprise:8000` on the compose network or `http://<your-host-ip>:8000` otherwise (trailing `/` stripped) |
 | `APPRISE_URLS` | — | Stateless mode: space/comma-separated target URLs passed through as-is |
 | `APPRISE_KEY` | — | Stateful mode: config key stored in the Apprise container (wins over `APPRISE_URLS`) |
 | `APPRISE_TIMEOUT_SECONDS` | `10` | HTTP timeout for the Apprise call |
@@ -117,7 +117,7 @@ volumes:
 Stateless example:
 
 ```bash
-APPRISE_BASE_URL=http://10.112.200.5:8000
+APPRISE_BASE_URL=http://apprise:8000
 APPRISE_URLS="ntfy://paytracker discord://1234/abcdef"
 ```
 
@@ -213,14 +213,16 @@ Relevant env vars:
 
 ```caddy
 pay.example.com {
-	reverse_proxy 10.112.200.5:3010
+	reverse_proxy 127.0.0.1:3010
 
 	handle /api/* {
 		uri strip_prefix /api
-		reverse_proxy 10.112.200.5:8010
+		reverse_proxy 127.0.0.1:8010
 	}
 }
 ```
+
+(Use the compose service names `frontend:3000` / `backend:8000` instead when Caddy runs in the same compose network as the app.)
 
 - **Public domain:** point an A record at the host; Caddy obtains and renews Let's Encrypt certificates automatically.
 - **LAN-only:** use a local name (e.g. `pay.local`) and add `tls internal`. Caddy signs with its own CA — install Caddy's root certificate on every device, or PWA installation can fail silently on some platforms.

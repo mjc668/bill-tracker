@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import current_user
+from app.core.ratelimit import rate_limited_by_user
 from app.models.bill import (
     BillFrequency,
     BillTemplate,
@@ -49,7 +50,7 @@ _COLUMNS = [
 
 @router.get("/xlsx")
 def export_xlsx(
-    year: int = Query(default_factory=lambda: date.today().year),
+    year: int = Query(default_factory=lambda: date.today().year, ge=2000, le=2100),
     db: Session = Depends(get_db),
     me: User = Depends(current_user),
 ):
@@ -99,6 +100,14 @@ def export_xlsx(
                 else pd.DataFrame(columns=_COLUMNS)
             )
             df.to_excel(writer, index=False, sheet_name=sheet_name)
+            # Formula-injection guard: openpyxl infers data_type "f" for any
+            # string starting with "=". Force those cells back to string type
+            # so user-controlled bill names/notes are never executed.
+            worksheet = writer.sheets[sheet_name]
+            for row in worksheet.iter_rows():
+                for cell in row:
+                    if cell.data_type == "f":
+                        cell.data_type = "s"
     buf.seek(0)
 
     filename = f"pay-tracker-{year}.xlsx"
@@ -354,6 +363,7 @@ def restore_json(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     me: User = Depends(current_user),
+    _rl: None = Depends(rate_limited_by_user("restore")),
 ):
     _ALLOWED_TYPES = ("application/json", "text/plain", "application/octet-stream")
     if file.content_type and file.content_type not in _ALLOWED_TYPES:
@@ -366,6 +376,11 @@ def restore_json(
         raw = json.loads(content)
     except json.JSONDecodeError:
         raise HTTPException(status_code=422, detail="Invalid JSON")
+    except (ValueError, AttributeError, RecursionError):
+        raise HTTPException(status_code=422, detail="Invalid backup file")
+
+    if not isinstance(raw, dict):
+        raise HTTPException(status_code=422, detail="Invalid backup file")
 
     if raw.get("schema_version") not in {2, 3, 4, 5, 6, 7}:
         raise HTTPException(status_code=422, detail="Unsupported schema version")
@@ -374,6 +389,8 @@ def restore_json(
         backup = BackupPayload.model_validate(raw)
     except ValidationError as e:
         raise HTTPException(status_code=422, detail=str(e))
+    except (ValueError, AttributeError, RecursionError):
+        raise HTTPException(status_code=422, detail="Invalid backup file")
 
     template_ids_in_backup = {t.id for t in backup.bill_templates}
     orphaned = [
@@ -453,7 +470,12 @@ def restore_from_snapshot(
     if snapshot is None:
         raise HTTPException(status_code=404, detail="No snapshot to restore")
 
-    backup = BackupPayload.model_validate(snapshot.payload)
+    try:
+        backup = BackupPayload.model_validate(snapshot.payload)
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except (ValueError, AttributeError, RecursionError):
+        raise HTTPException(status_code=422, detail="Invalid snapshot payload")
     restored_templates, restored_instances = _apply_backup(db, me.id, backup)
     db.delete(snapshot)
     db.commit()

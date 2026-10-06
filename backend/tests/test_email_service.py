@@ -238,6 +238,27 @@ def test_monthly_summary_empty_paid_section(mock_smtp_cls):
     assert "Netflix" in html
 
 
+@patch("app.services.email.smtplib.SMTP")
+def test_monthly_summary_escapes_user_controlled_currency(mock_smtp_cls):
+    """A malicious currency string is HTML-escaped in the summary email."""
+    smtp_instance = MagicMock()
+    mock_smtp_cls.return_value.__enter__ = MagicMock(return_value=smtp_instance)
+    mock_smtp_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+    row = {**_UNPAID_ROW, "currency": '<script>alert("x")</script>'}
+    send_monthly_summary_email(
+        **_SUMMARY_BASE,
+        paid_rows=[],
+        unpaid_rows=[row],
+    )
+
+    msg = smtp_instance.send_message.call_args[0][0]
+    html_part = next(p for p in msg.walk() if p.get_content_type() == "text/html")
+    html = html_part.get_payload(decode=True).decode()
+    assert "<script>" not in html
+    assert "&lt;script&gt;" in html
+
+
 @pytest.mark.parametrize(
     "language,expected_subject",
     [

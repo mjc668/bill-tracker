@@ -23,6 +23,10 @@ export const metadata: Metadata = {
   themeColor: "#2563eb",
 };
 
+function serializeForInlineScript(value: string): string {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -51,7 +55,7 @@ export default async function RootLayout({
           return (
             <script
               dangerouslySetInnerHTML={{
-                __html: `window.__PT_API_URL__=${JSON.stringify(apiBaseUrl)};window.__PT_API_PREFIX__=${JSON.stringify(apiPrefix)};`,
+                __html: `window.__PT_API_URL__=${serializeForInlineScript(apiBaseUrl)};window.__PT_API_PREFIX__=${serializeForInlineScript(apiPrefix)};`,
               }}
             />
           );

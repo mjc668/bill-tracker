@@ -1077,6 +1077,7 @@ def test_empty_state_defaults_to_pln(client):
         "?month=notamonth",
         "?month=2026-13",
         "?month=2026-00",
+        "?month=0000-01",
         "?months=0",
         "?months=25",
         "?months=abc",

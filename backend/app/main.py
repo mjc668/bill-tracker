@@ -1,10 +1,13 @@
 import asyncio
 import logging
+from collections.abc import Awaitable, Callable
 from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 logging.getLogger("app").setLevel(logging.INFO)
 
@@ -60,6 +63,16 @@ app.include_router(bills.router)
 app.include_router(categories.router)
 app.include_router(export.router)
 app.include_router(stats.router)
+
+
+@app.middleware("http")
+async def add_no_store_header(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    """Authenticated JSON API: never let browsers or proxies cache responses."""
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.get("/health")

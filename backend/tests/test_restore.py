@@ -5,6 +5,8 @@ from decimal import Decimal
 
 import pytest
 
+from app.core.config import settings
+from app.core.ratelimit import reset_rate_limits
 from tests.conftest import auth, register_and_login, sync_payments
 
 _BILL = {
@@ -867,3 +869,126 @@ def test_v7_backup_can_clear_existing_cap(client):
 
     bills = client.get("/bills", headers=auth(tok)).json()
     assert bills[0]["max_occurrences"] is None
+
+
+# ---------------------------------------------------------------------------
+# Restore payload validation (hardening)
+# ---------------------------------------------------------------------------
+
+
+def _valid_instance(**overrides) -> dict:
+    base = {
+        "id": 1,
+        "bill_id": 1,
+        "period": "2026-01",
+        "due_date": "2026-01-15",
+        "amount": 100.0,
+        "status": "upcoming",
+        "paid_at": None,
+        "paid_amount": None,
+        "notes": None,
+        "created_at": "2026-01-01T00:00:00+00:00",
+    }
+    base.update(overrides)
+    return base
+
+
+@pytest.mark.parametrize(
+    "period",
+    ["2026-13", "2026-00", "2026-1", "202601", "not-a-period"],
+)
+def test_restore_invalid_instance_period_returns_422(client, period):
+    tok = register_and_login(client, "bad_period@test.com")
+    payload = _make_backup(
+        [_template_dict()], [_valid_instance(period=period)], schema_version=7
+    )
+    r = _upload(client, tok, payload)
+    assert r.status_code == 422, period
+
+
+@pytest.mark.parametrize("start_period", ["2026-13", "2026-1", "nope"])
+def test_restore_invalid_start_period_returns_422(client, start_period):
+    tok = register_and_login(client, "bad_start_period@test.com")
+    payload = _make_backup(
+        [_template_dict(start_period=start_period)], [], schema_version=7
+    )
+    r = _upload(client, tok, payload)
+    assert r.status_code == 422, start_period
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("due_date", "15/01/2026"),
+        ("due_date", "2026-13-01"),
+        ("paid_at", "yesterday"),
+        ("created_at", "not-a-datetime"),
+    ],
+)
+def test_restore_invalid_instance_dates_return_422(client, field, value):
+    tok = register_and_login(client, "bad_date@test.com")
+    payload = _make_backup(
+        [_template_dict()], [_valid_instance(**{field: value})], schema_version=7
+    )
+    r = _upload(client, tok, payload)
+    assert r.status_code == 422, f"{field}={value}"
+
+
+@pytest.mark.parametrize("currency", ["pln", "€", "US D", "TOOLONGVALUE"])
+def test_restore_invalid_currency_returns_422(client, currency):
+    tok = register_and_login(client, "bad_currency@test.com")
+    payload = _make_backup([_template_dict(currency=currency)], [], schema_version=7)
+    r = _upload(client, tok, payload)
+    assert r.status_code == 422, currency
+
+
+def test_restore_invalid_payment_fields_return_422(client):
+    tok = register_and_login(client, "bad_payment@test.com")
+    instance = _valid_instance(status="paid", paid_at="2026-01-15T00:00:00+00:00")
+    payload = _make_backup([_template_dict()], [instance], schema_version=7)
+    payload["payments"] = [
+        {
+            "id": 1,
+            "instance_id": 1,
+            "amount": 10.0,
+            "paid_on": "15-01-2026",
+            "note": None,
+            "created_at": "2026-01-15T00:00:00+00:00",
+        }
+    ]
+    r = _upload(client, tok, payload)
+    assert r.status_code == 422
+
+
+def test_restore_non_object_json_returns_422(client):
+    tok = register_and_login(client, "non_object@test.com")
+    r = client.post(
+        "/export/restore",
+        files={"file": ("backup.json", b"[1, 2, 3]", "application/json")},
+        headers=auth(tok),
+    )
+    assert r.status_code == 422
+
+
+@pytest.mark.parametrize("collection", ["bill_templates", "payment_instances"])
+def test_restore_collection_cap_returns_422(client, collection):
+    tok = register_and_login(client, "too_many@test.com")
+    payload = _make_backup([], [])
+    payload[collection] = [{} for _ in range(5001)]
+    r = _upload(client, tok, payload)
+    assert r.status_code == 422
+
+
+def test_restore_rate_limited_returns_429(client):
+    tok = register_and_login(client, "restore_rl@test.com")
+    original = settings.restore_rate_limit
+    try:
+        settings.restore_rate_limit = 1
+        reset_rate_limits("restore")
+        first = _upload(client, tok, _make_backup([], []))
+        assert first.status_code == 200
+        second = _upload(client, tok, _make_backup([], []))
+        assert second.status_code == 429
+    finally:
+        settings.restore_rate_limit = original
+        reset_rate_limits("restore")

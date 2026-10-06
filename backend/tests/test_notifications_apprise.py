@@ -468,6 +468,32 @@ def test_notification_status_reflects_settings(client):
     assert r.json() == {"smtp_configured": True, "apprise_configured": True}
 
 
+def test_notification_status_requires_auth(client):
+    r = client.get("/auth/notification-status")
+    assert r.status_code == 401
+
+
+def test_send_test_notification_apprise_failure_redacts_upstream_body(client):
+    token = register_and_login(client, "test_apprise_fail@test.com", _PASSWORD)
+    with (
+        _channels(apprise_base_url=_APPRISE_BASE, apprise_urls=_APPRISE_URLS),
+        patch(
+            "app.services.notifications.httpx.post",
+            return_value=httpx.Response(424, text="Failed to reach ntfy://secret"),
+        ),
+    ):
+        r = client.post("/auth/send-test-notification", headers=auth(token))
+
+    assert r.status_code == 200
+    assert r.json()["ok"] is False
+    detail = r.json()["detail"]
+    assert detail is not None
+    assert "apprise request failed" in detail
+    assert "HTTP 424" in detail
+    assert "ntfy://" not in detail
+    assert "secret" not in detail
+
+
 def test_notification_status_all_unconfigured(client):
     token = register_and_login(client, "notif_status_none@test.com", _PASSWORD)
     with _channels():

@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from app.core.security import validate_password_strength
 
 _CURRENCY_PATTERN = re.compile(r"^[A-Z0-9]{2,10}$")
+_BCRYPT_MAX_PASSWORD_BYTES = 72
 
 
 def _normalize_currency(value: str) -> str:
@@ -15,13 +16,32 @@ def _normalize_currency(value: str) -> str:
     return normalized
 
 
+def _reject_oversized_password(value: str) -> str:
+    if len(value.encode("utf-8")) > _BCRYPT_MAX_PASSWORD_BYTES:
+        raise ValueError(
+            f"Password must be at most {_BCRYPT_MAX_PASSWORD_BYTES} bytes "
+            "when UTF-8 encoded"
+        )
+    return value
+
+
+def _normalize_email(value: str) -> str:
+    return value.lower()
+
+
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: Annotated[str, Field(min_length=8)]
 
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return _normalize_email(v)
+
     @field_validator("password")
     @classmethod
     def validate_password(cls, v: str) -> str:
+        _reject_oversized_password(v)
         validate_password_strength(v)
         return v
 
@@ -30,10 +50,10 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return _normalize_email(v)
 
 
 class UserProfileOut(BaseModel):
@@ -77,6 +97,7 @@ class ChangePasswordRequest(BaseModel):
     @field_validator("new_password")
     @classmethod
     def validate_new_password(cls, v: str) -> str:
+        _reject_oversized_password(v)
         validate_password_strength(v)
         return v
 
@@ -84,6 +105,11 @@ class ChangePasswordRequest(BaseModel):
 class ChangeEmailRequest(BaseModel):
     new_email: EmailStr
     current_password: str
+
+    @field_validator("new_email")
+    @classmethod
+    def normalize_new_email(cls, v: str) -> str:
+        return _normalize_email(v)
 
 
 class SendNotificationNowOut(BaseModel):
@@ -97,10 +123,20 @@ class SendMonthlySummaryNowOut(BaseModel):
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return _normalize_email(v)
+
 
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        return _reject_oversized_password(v)
 
 
 class SmtpStatusResponse(BaseModel):

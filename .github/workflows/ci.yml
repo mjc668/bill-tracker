@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+# Read-only: every job only needs the checked-out source and public images.
+permissions:
+  contents: read
+
 jobs:
   frontend:
     name: Frontend — build & lint
@@ -16,6 +20,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -34,10 +40,8 @@ jobs:
 
       - run: npm run lint
       - run: npm run build
-      # Advisory only — audits used to flip CI red on new advisories against
-      # already-locked versions, so this step never blocks the pipeline.
+      # Blocks the pipeline on high-severity advisories in production deps.
       - run: npm audit --omit=dev --audit-level=high
-        continue-on-error: true
 
   backend:
     name: Backend — format, types & tests
@@ -48,6 +52,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
@@ -62,10 +68,8 @@ jobs:
       - run: uv run black --check --target-version py313 .
       - run: uv run mypy app
       - run: uv run pytest tests/ -v
-      # Advisory only — audits used to flip CI red on new advisories against
-      # already-locked versions, so this step never blocks the pipeline.
+      # Blocks the pipeline on known advisories in the locked dependency set.
       - run: uvx pip-audit
-        continue-on-error: true
 
   docker-e2e:
     name: Docker — build, up, e2e, down
@@ -76,6 +80,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -92,10 +98,14 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Create .env from example
-        run: cp .env.example .env
+        run: |
+          cp .env.example .env
+          # Throwaway credentials for this disposable CI stack only.
+          sed -i 's|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=ci-postgres-password|' .env
+          sed -i 's|^JWT_SECRET=.*|JWT_SECRET=ci-jwt-secret-not-for-production|' .env
 
       - name: Build Docker Compose services
-        run: docker compose build
+        run: docker compose --profile demo build
 
       - name: Start stack
         run: docker compose up -d --wait --timeout 120 postgres backend frontend demo-data

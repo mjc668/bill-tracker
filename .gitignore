@@ -6,9 +6,14 @@ backend/.venv/
 frontend/.next/
 
 # Environment files
-.env
-.env.local
-.env.*.local
+.env*
+!.env.example
+
+# Backups / database dumps
+backups/
+*.sql
+*.sql.gz
+*.dump
 
 # Python
 __pycache__/

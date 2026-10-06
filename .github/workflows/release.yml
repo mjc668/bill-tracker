@@ -4,14 +4,11 @@ on:
   release:
     types: [published]
 
-permissions:
-  contents: write
-  packages: write
-
 jobs:
   version:
     name: Resolve version
     runs-on: ubuntu-latest
+    permissions: {}
     outputs:
       value: ${{ steps.version.outputs.value }}
     steps:
@@ -23,8 +20,13 @@ jobs:
     name: Docker — build & push backend/demo (QEMU multi-arch)
     runs-on: ubuntu-latest
     needs: version
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -40,7 +42,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push backend
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./backend
           platforms: linux/amd64,linux/arm64
@@ -50,7 +52,7 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/pay-tracker-backend:latest
 
       - name: Build and push demo
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./demo
           platforms: linux/amd64,linux/arm64
@@ -62,6 +64,9 @@ jobs:
   frontend-build:
     name: Docker — build frontend (${{ matrix.platform }}, native)
     needs: version
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -73,6 +78,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Prepare platform pair
         run: echo "PLATFORM_PAIR=${PLATFORM//\//-}" >> "$GITHUB_ENV"
@@ -91,7 +98,7 @@ jobs:
 
       - name: Build and push frontend by digest
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./frontend
           platforms: ${{ matrix.platform }}
@@ -117,6 +124,9 @@ jobs:
     name: Docker — merge frontend multi-arch manifest
     needs: [version, frontend-build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
@@ -138,6 +148,7 @@ jobs:
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
+          # shellcheck disable=SC2046  # word splitting is intended here
           docker buildx imagetools create \
             -t ghcr.io/${{ github.repository_owner }}/pay-tracker-frontend:${{ needs.version.outputs.value }} \
             -t ghcr.io/${{ github.repository_owner }}/pay-tracker-frontend:latest \
@@ -151,6 +162,8 @@ jobs:
     name: Sync version files to released tag
     runs-on: ubuntu-latest
     needs: [backend-and-demo, frontend-merge]
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v5
         with:
@@ -161,18 +174,22 @@ jobs:
         run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
       - name: Write version into pyproject.toml / package.json
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
         run: |
-          VERSION="${{ steps.version.outputs.value }}"
           sed -i "s/^version = \".*\"/version = \"$VERSION\"/" pyproject.toml
           sed -i "s/^version = \".*\"/version = \"$VERSION\"/" backend/pyproject.toml
           sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" frontend/package.json
 
       - name: Commit and push if changed
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+          TARGET_BRANCH: ${{ github.event.release.target_commitish }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add pyproject.toml backend/pyproject.toml frontend/package.json
           if ! git diff --cached --quiet; then
-            git commit -m "chore: sync version to ${{ steps.version.outputs.value }} [skip ci]"
-            git push origin HEAD:${{ github.event.release.target_commitish }}
+            git commit -m "chore: sync version to $VERSION [skip ci]"
+            git push origin "HEAD:$TARGET_BRANCH"
           fi

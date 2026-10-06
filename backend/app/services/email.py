@@ -227,7 +227,8 @@ def _build_summary_html(
     h = _SUMMARY_HEADINGS.get(lang, _SUMMARY_HEADINGS["en"])
 
     def fmt_amount(amount: Any, currency: str) -> str:
-        return f"{Decimal(str(amount)):.2f} {currency}"
+        # Currency is user-controlled (template field); escape before embedding.
+        return f"{Decimal(str(amount)):.2f} {html.escape(str(currency))}"
 
     # Paid section rows
     paid_html = ""
@@ -281,7 +282,7 @@ def _build_summary_html(
     )
     total_outstanding = sum(Decimal(str(r["amount"])) for r in unpaid_rows)
     currencies = {r["currency"] for r in paid_rows + unpaid_rows}
-    currency_label = next(iter(currencies), "")
+    currency_label = html.escape(str(next(iter(currencies), "")))
 
     totals_html = (
         (

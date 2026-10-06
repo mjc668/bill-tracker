@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-paytracker}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
       POSTGRES_DB: ${POSTGRES_DB:-paytracker}
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -15,6 +15,18 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    # The official entrypoint starts as root and drops to the postgres user via
+    # gosu, which needs these capabilities; everything else is dropped.
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    security_opt:
+      - no-new-privileges:true
 
   backend:
     image: pay-tracker-backend:latest
@@ -23,7 +35,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: "postgresql://${POSTGRES_USER:-paytracker}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-paytracker}"
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-paytracker}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}@postgres:5432/${POSTGRES_DB:-paytracker}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -34,7 +46,13 @@ services:
       retries: 5
       start_period: 30s
     ports:
+      # Dev convenience: bound on all interfaces. Production
+      # (docker-compose.prod.yml) binds to 127.0.0.1 only, behind Caddy.
       - "8010:8000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
   frontend:
     image: pay-tracker-frontend:latest
@@ -46,11 +64,14 @@ services:
         NEXT_PUBLIC_SESSION_HEARTBEAT_SECONDS: ${NEXT_PUBLIC_SESSION_HEARTBEAT_SECONDS:-180}
     container_name: frontend
     restart: unless-stopped
-    env_file: .env
+    # No env_file here: the frontend must not receive backend secrets such as
+    # JWT_SECRET. Only pass the variables it reads at runtime (layout.tsx,
+    # proxy.ts use API_URL / API_PREFIX).
     environment:
       # Injected at request time so the same image works on any host without
       # rebuilding; the baked build-time value is only a fallback.
       API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8010}
+      API_PREFIX: ${API_PREFIX:-}
     depends_on:
       backend:
         condition: service_healthy
@@ -61,11 +82,18 @@ services:
       retries: 6
       start_period: 30s
     ports:
+      # Dev convenience: bound on all interfaces. Production
+      # (docker-compose.prod.yml) binds to 127.0.0.1 only, behind Caddy.
       - "3010:3000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
   demo-data:
     build: ./demo
     container_name: demo-data
+    profiles: ["demo"]
     depends_on:
       backend:
         condition: service_healthy

@@ -5,6 +5,21 @@ export const API = process.env.E2E_API_URL ?? 'http://localhost:8010';
 const E2E_USERS_FILE = '/tmp/e2e-users.json';
 
 /**
+ * Reads the access_token cookie out of a response's set-cookie header.
+ * Playwright joins multiple set-cookie values with newlines; each cookie's
+ * value ends at the first `;` or separator.
+ */
+function extractAccessToken(setCookieHeader: string | undefined): string {
+  const match = setCookieHeader?.match(/(?:^|[\n,])\s*access_token=([^;\s,]+)/);
+  if (!match) {
+    throw new Error(
+      'Registration succeeded but the set-cookie response header contained no access_token cookie',
+    );
+  }
+  return match[1];
+}
+
+/**
  * Registers a fresh user via the backend API and returns their credentials.
  * Because page.request shares the browser context's cookie jar, the
  * access_token and auth_logged_in cookies set by the register endpoint are
@@ -26,8 +41,7 @@ export async function loginNewUser(page: Page): Promise<{ email: string; passwor
     throw new Error(`Registration failed: ${res.status()} — ${await res.text()}`);
   }
 
-  const data = await res.json();
-  const token: string = data.access_token;
+  const token = extractAccessToken(res.headers()['set-cookie']);
 
   const existing: Array<{ email: string; token: string }> = fs.existsSync(E2E_USERS_FILE)
     ? (JSON.parse(fs.readFileSync(E2E_USERS_FILE, 'utf-8')) as Array<{ email: string; token: string }>)

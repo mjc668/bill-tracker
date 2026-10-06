@@ -1,3 +1,4 @@
+import re
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from pydantic import (
@@ -10,9 +11,31 @@ from pydantic import (
 from app.models.bill import BillFrequency, PaymentStatus
 from app.schemas.category import CategoryOut
 
+_PERIOD_PATTERN = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+_CURRENCY_PATTERN = re.compile(r"^[A-Z0-9]{2,10}$")
+_MAX_BACKUP_ENTRIES = 5000
+
+
+def _validate_optional_period(value: str | None) -> str | None:
+    if value is not None and not _PERIOD_PATTERN.match(value):
+        raise ValueError("must be a YYYY-MM period")
+    return value
+
+
+def _validate_optional_iso_date(value: str | None) -> str | None:
+    if value is not None:
+        date.fromisoformat(value)
+    return value
+
+
+def _validate_optional_iso_datetime(value: str | None) -> str | None:
+    if value is not None:
+        datetime.fromisoformat(value)
+    return value
+
 
 class BillTemplateCreate(BaseModel):
-    name: str
+    name: str = Field(max_length=255)
     category_id: int | None = None  # preferred
     category: str | None = None  # legacy default-key string, resolved server-side
     frequency: BillFrequency
@@ -20,10 +43,10 @@ class BillTemplateCreate(BaseModel):
     max_occurrences: int | None = Field(None, ge=1, le=999)  # None = unlimited
     start_date: date | None = None  # weekly anchor ("first payment date")
     amount: Decimal = Decimal("0")
-    currency: str = "PLN"
+    currency: str = Field("PLN", pattern=_CURRENCY_PATTERN.pattern)
     due_day: int | None = Field(None, ge=1, le=31)
     due_month: int | None = Field(None, ge=1, le=12)  # month for annual/one_off
-    notes: str | None = None
+    notes: str | None = Field(None, max_length=5000)
     is_paused: bool = False
 
     @model_validator(mode="after")
@@ -34,7 +57,7 @@ class BillTemplateCreate(BaseModel):
 
 
 class BillTemplateUpdate(BaseModel):
-    name: str | None = None
+    name: str | None = Field(None, max_length=255)
     category_id: int | None = None  # preferred
     category: str | None = None  # legacy default-key string, resolved server-side
     frequency: BillFrequency | None = None
@@ -42,10 +65,10 @@ class BillTemplateUpdate(BaseModel):
     max_occurrences: int | None = Field(None, ge=1, le=999)  # None = unlimited
     start_date: date | None = None
     amount: Decimal | None = None
-    currency: str | None = None
+    currency: str | None = Field(None, pattern=_CURRENCY_PATTERN.pattern)
     due_day: int | None = Field(None, ge=1, le=31)
     due_month: int | None = Field(None, ge=1, le=12)  # month for annual/one_off
-    notes: str | None = None
+    notes: str | None = Field(None, max_length=5000)
     is_paused: bool | None = None
     recreate_deleted_future: bool = False  # transient control flag — not persisted
 
@@ -127,7 +150,9 @@ class PaymentCreate(BaseModel):
 
 
 class MarkPaidRequest(BaseModel):
-    paid_amount: Decimal | None = None  # defaults to remaining balance when None
+    paid_amount: Decimal | None = Field(
+        None, gt=0
+    )  # defaults to remaining balance when None
     notes: str | None = None
 
 
@@ -169,6 +194,29 @@ class BackupTemplate(BaseModel):
     start_period: str | None
     created_at: str
 
+    @field_validator("start_period")
+    @classmethod
+    def validate_start_period(cls, v: str | None) -> str | None:
+        return _validate_optional_period(v)
+
+    @field_validator("start_date")
+    @classmethod
+    def validate_start_date(cls, v: str | None) -> str | None:
+        return _validate_optional_iso_date(v)
+
+    @field_validator("created_at")
+    @classmethod
+    def validate_created_at(cls, v: str) -> str:
+        _validate_optional_iso_datetime(v)
+        return v
+
+    @field_validator("currency")
+    @classmethod
+    def validate_currency(cls, v: str) -> str:
+        if not _CURRENCY_PATTERN.match(v):
+            raise ValueError("currency must be 2-10 uppercase alphanumeric characters")
+        return v
+
     @model_validator(mode="before")
     @classmethod
     def normalize_legacy_frequency(cls, data: object) -> object:
@@ -201,6 +249,24 @@ class BackupInstance(BaseModel):
     reminder_sent_upcoming: bool = False
     reminder_sent_overdue: bool = False
 
+    @field_validator("period")
+    @classmethod
+    def validate_period(cls, v: str) -> str:
+        if not _PERIOD_PATTERN.match(v):
+            raise ValueError("period must be a YYYY-MM period")
+        return v
+
+    @field_validator("due_date")
+    @classmethod
+    def validate_due_date(cls, v: str) -> str:
+        date.fromisoformat(v)
+        return v
+
+    @field_validator("paid_at", "created_at")
+    @classmethod
+    def validate_iso_datetimes(cls, v: str | None) -> str | None:
+        return _validate_optional_iso_datetime(v)
+
 
 class BackupPayment(BaseModel):
     id: int
@@ -210,12 +276,24 @@ class BackupPayment(BaseModel):
     note: str | None
     created_at: str
 
+    @field_validator("paid_on")
+    @classmethod
+    def validate_paid_on(cls, v: str) -> str:
+        date.fromisoformat(v)
+        return v
+
+    @field_validator("created_at")
+    @classmethod
+    def validate_created_at(cls, v: str) -> str:
+        _validate_optional_iso_datetime(v)
+        return v
+
 
 class BackupPayload(BaseModel):
     schema_version: int
-    bill_templates: list[BackupTemplate]
-    payment_instances: list[BackupInstance]
-    payments: list[BackupPayment] = []
+    bill_templates: list[BackupTemplate] = Field(max_length=_MAX_BACKUP_ENTRIES)
+    payment_instances: list[BackupInstance] = Field(max_length=_MAX_BACKUP_ENTRIES)
+    payments: list[BackupPayment] = Field(default=[], max_length=_MAX_BACKUP_ENTRIES)
 
 
 class ExportSummaryOut(BaseModel):

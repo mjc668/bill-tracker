@@ -14,7 +14,7 @@ router = APIRouter(prefix="/stats", tags=["stats"])
 
 @router.get("/overview", response_model=StatsOverviewOut)
 def stats_overview(
-    month: str | None = Query(None, pattern=r"^\d{4}-\d{2}$"),
+    month: str | None = Query(None, pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
     months: int = Query(6, ge=1, le=24),
     db: Session = Depends(get_db),
     me: User = Depends(current_user),
@@ -22,6 +22,8 @@ def stats_overview(
     """Read-only dashboard stats for the user's primary currency."""
     today = date.today()
     target = month if month is not None else today.strftime("%Y-%m")
-    if not 1 <= int(target[5:7]) <= 12:
+    # The pattern above still admits year 0000, whose month arithmetic in the
+    # forecast produces negative years; reject it explicitly.
+    if int(target[:4]) == 0:
         raise HTTPException(status_code=422, detail="month must be a valid YYYY-MM")
     return build_stats_overview(db, me, target, months)

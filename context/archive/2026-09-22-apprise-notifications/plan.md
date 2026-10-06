@@ -10,7 +10,7 @@ All in `backend/app/core/config.py` (`Settings`), documented in `.env.example`:
 
 | Env var | Setting | Default | Meaning |
 |---|---|---|---|
-| `APPRISE_BASE_URL` | `apprise_base_url: str \| None` | `None` | e.g. `http://10.112.200.5:8000` (no trailing slash required; strip trailing `/`) |
+| `APPRISE_BASE_URL` | `apprise_base_url: str \| None` | `None` | e.g. `http://apprise:8000` (no trailing slash required; strip trailing `/`) |
 | `APPRISE_URLS` | `apprise_urls: str \| None` | `None` | stateless mode: space/comma-separated Apprise target URLs, passed through as-is |
 | `APPRISE_KEY` | `apprise_key: str \| None` | `None` | stateful mode: config key stored in the Apprise container |
 | `APPRISE_TIMEOUT_SECONDS` | `apprise_timeout_seconds: float` | `10.0` | HTTP timeout |

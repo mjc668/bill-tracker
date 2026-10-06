@@ -454,3 +454,26 @@ def test_legacy_pay_partial_then_default_completes(client):
     assert Decimal(str(d2["paid_amount"])) == Decimal("120.00")
     assert len(d2["payments"]) == 2
     assert Decimal(str(d2["payments"][1]["amount"])) == Decimal("90.00")
+
+
+# ---------------------------------------------------------------------------
+# Input bounds
+# ---------------------------------------------------------------------------
+
+
+def test_negative_paid_amount_returns_422(client):
+    tok = register_and_login(client, "ledger_negative@test.com")
+    bill_id = _create_bill(client, tok)
+    inst = _seed_instance(client, tok, bill_id)
+
+    r = _legacy_pay(client, tok, inst["id"], paid_amount=-5)
+    assert r.status_code == 422
+
+
+def test_zero_paid_amount_returns_422(client):
+    tok = register_and_login(client, "ledger_zero@test.com")
+    bill_id = _create_bill(client, tok)
+    inst = _seed_instance(client, tok, bill_id)
+
+    r = _legacy_pay(client, tok, inst["id"], paid_amount=0)
+    assert r.status_code == 422

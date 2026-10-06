@@ -171,6 +171,48 @@ def test_reset_password_too_short_returns_400(client_db):
     assert "8" in r.json()["detail"]
 
 
+def test_reset_password_over_72_bytes_returns_422(client_db):
+    client, _ = client_db
+    r = client.post(
+        "/auth/reset-password",
+        json={"token": "any-token", "new_password": "a" * 73},
+    )
+    assert r.status_code == 422
+
+
+def test_reset_password_replay_after_consumption_returns_400_not_500(client_db):
+    """A consumed token (e.g. lost race) is rejected cleanly, never a 500."""
+    client, db = client_db
+    register_and_login(client, "replay@example.com")
+
+    known_raw = "replay-raw-token-for-testing-123456"
+    db.add(
+        PasswordResetToken(
+            user_id=db.execute(
+                __import__("sqlalchemy").text(
+                    "SELECT id FROM users WHERE email='replay@example.com'"
+                )
+            ).scalar(),
+            token_hash=_token_hash(known_raw),
+            expires_at=None,
+        )
+    )
+    db.commit()
+
+    first = client.post(
+        "/auth/reset-password",
+        json={"token": known_raw, "new_password": "newpassword1"},
+    )
+    assert first.status_code == 200
+
+    replay = client.post(
+        "/auth/reset-password",
+        json={"token": known_raw, "new_password": "anotherpassword1"},
+    )
+    assert replay.status_code == 400
+    assert "invalid" in replay.json()["detail"].lower()
+
+
 def test_reset_password_token_is_single_use(client_db):
     client, db = client_db
     register_and_login(client, "singleuse@example.com")

@@ -402,7 +402,7 @@ def delete_payment(
 
 @router.post("/sync-instances", status_code=status.HTTP_204_NO_CONTENT)
 def sync_instances(
-    month: str | None = None,
+    month: str | None = Query(None, pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
     db: Session = Depends(get_db),
     me: User = Depends(current_user),
 ):

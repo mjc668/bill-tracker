@@ -272,6 +272,56 @@ def test_register_password_too_short_returns_422(client):
 
 
 # ---------------------------------------------------------------------------
+# Email normalization
+# ---------------------------------------------------------------------------
+
+
+def test_register_normalizes_email_to_lowercase(client):
+    r = client.post(
+        "/auth/register",
+        json={"email": "MiXeD@Example.COM", "password": _PASSWORD},
+    )
+    assert r.status_code == 201
+
+    token = r.cookies["access_token"]
+    me = client.get("/auth/me", headers=auth(token))
+    assert me.status_code == 200
+    assert me.json()["email"] == "mixed@example.com"
+
+
+def test_login_is_case_insensitive_and_duplicate_mixed_case_rejected(client):
+    register_and_login(client, "case@test.com")
+
+    # Same address, different case → duplicate.
+    dup = client.post(
+        "/auth/register", json={"email": "CASE@test.com", "password": _PASSWORD}
+    )
+    assert dup.status_code == 409
+
+    # Login with a differently-cased address works.
+    r = client.post(
+        "/auth/login", json={"email": "CaSe@TeSt.CoM", "password": _PASSWORD}
+    )
+    assert r.status_code == 200
+
+
+def test_change_email_normalizes_new_email(client):
+    token = register_and_login(client, "changenorm@test.com", _PASSWORD)
+    r = client.patch(
+        "/auth/change-email",
+        json={"new_email": "NewAddr@Test.COM", "current_password": _PASSWORD},
+        headers=auth(token),
+    )
+    assert r.status_code == 200
+    assert r.json()["email"] == "newaddr@test.com"
+
+    r = client.post(
+        "/auth/login", json={"email": "newaddr@test.com", "password": _PASSWORD}
+    )
+    assert r.status_code == 200
+
+
+# ---------------------------------------------------------------------------
 # POST /auth/login — error paths
 # ---------------------------------------------------------------------------
 

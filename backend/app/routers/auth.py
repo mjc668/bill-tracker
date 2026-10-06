@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import re
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -11,8 +12,9 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import current_user, optional_current_user
-from app.core.ratelimit import rate_limited, rate_limited_by_user
+from app.core.ratelimit import rate_limited, rate_limited_by_user, rate_limited_key
 from app.core.security import (
+    PasswordTooLongError,
     create_access_token,
     hash_password,
     validate_password_strength,
@@ -33,7 +35,6 @@ from app.schemas.auth import (
     SendNotificationNowOut,
     SendTestNotificationOut,
     SmtpStatusResponse,
-    TokenResponse,
     UserProfileOut,
     UserProfileUpdate,
 )
@@ -83,7 +84,7 @@ def _clear_auth_cookies(response: Response) -> None:
 
 
 @router.post(
-    "/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
+    "/register", response_model=MessageResponse, status_code=status.HTTP_201_CREATED
 )
 def register(
     body: RegisterRequest,
@@ -91,9 +92,16 @@ def register(
     _rl: None = Depends(rate_limited("register")),
     db: Session = Depends(get_db),
 ):
-    if db.query(User).filter(User.email == body.email).first():
+    email = body.email.lower()
+    if db.query(User).filter(User.email == email).first():
         raise HTTPException(status_code=409, detail="Email already registered")
-    user = User(email=body.email, password_hash=hash_password(body.password))
+    try:
+        password_hash = hash_password(body.password)
+    except PasswordTooLongError:
+        raise HTTPException(
+            status_code=422, detail="Password exceeds the 72-byte limit"
+        )
+    user = User(email=email, password_hash=password_hash)
     db.add(user)
     db.flush()
     ensure_default_categories(db, user)
@@ -101,22 +109,28 @@ def register(
     db.refresh(user)
     token = create_access_token(str(user.id), token_version=user.token_version)
     _set_auth_cookie(response, token)
-    return TokenResponse(access_token=token)
+    return MessageResponse(message="Account created.")
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=MessageResponse)
 def login(
     body: LoginRequest,
     response: Response,
     _rl: None = Depends(rate_limited("login")),
     db: Session = Depends(get_db),
 ):
+    rate_limited_key(
+        "login",
+        body.email.lower(),
+        settings.login_account_rate_limit,
+        settings.login_account_rate_window_seconds,
+    )
     user = db.query(User).filter(User.email == body.email).first()
     if not user or not verify_password(body.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_access_token(str(user.id), token_version=user.token_version)
     _set_auth_cookie(response, token)
-    return TokenResponse(access_token=token)
+    return MessageResponse(message="Logged in.")
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -174,8 +188,18 @@ def change_password(
 ):
     if not verify_password(body.current_password, user.password_hash):
         raise HTTPException(status_code=401, detail="Current password is incorrect")
-    user.password_hash = hash_password(body.new_password)
+    try:
+        new_password_hash = hash_password(body.new_password)
+    except PasswordTooLongError:
+        raise HTTPException(
+            status_code=422, detail="Password exceeds the 72-byte limit"
+        )
+    user.password_hash = new_password_hash
     user.token_version += 1
+    # Any outstanding reset link is now moot and must not remain usable.
+    db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user.id).delete(
+        synchronize_session=False
+    )
     db.commit()
 
 
@@ -231,6 +255,10 @@ def change_email(
         raise HTTPException(status_code=409, detail="Email already registered")
     user.email = body.new_email
     user.token_version += 1
+    # A reset link sent to the old address must not survive the change.
+    db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user.id).delete(
+        synchronize_session=False
+    )
     db.commit()
     db.refresh(user)
     return user
@@ -242,7 +270,7 @@ def smtp_status():
 
 
 @router.get("/notification-status", response_model=NotificationStatusResponse)
-def notification_status():
+def notification_status(_: User = Depends(current_user)):
     return NotificationStatusResponse(
         smtp_configured=settings.smtp_host is not None,
         apprise_configured=notifications.apprise_configured(),
@@ -279,10 +307,21 @@ def send_test_notification(
         notify_type="success",
         email_sender=_send_email,
     )
+    detail = result.error
+    if result.source is notifications.NotificationChannel.apprise:
+        # Never echo Apprise's upstream response body to the client; it may
+        # contain target URLs or internal diagnostics. Keep it in the log.
+        _logger.warning("Apprise test notification failed: %s", result.error)
+        status_match = re.search(r"HTTP (\d{3})", result.error or "")
+        detail = "apprise request failed (see server logs)"
+        if status_match:
+            detail = (
+                f"apprise request failed ({status_match.group(0)}, see server logs)"
+            )
     return SendTestNotificationOut(
         ok=result.ok,
         channel=result.channel.value if result.channel else None,
-        detail=result.error,
+        detail=detail,
     )
 
 
@@ -355,9 +394,12 @@ def reset_password(
     db: Session = Depends(get_db),
 ):
     token_hash = hashlib.sha256(body.token.encode()).hexdigest()
+    # Lock the row so two concurrent resets cannot both succeed: the loser
+    # blocks, then re-reads the now-deleted row and gets a clean 400.
     token_row = (
         db.query(PasswordResetToken)
         .filter(PasswordResetToken.token_hash == token_hash)
+        .with_for_update()
         .first()
     )
     if not token_row:
@@ -377,7 +419,13 @@ def reset_password(
     if not user:
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
 
-    user.password_hash = hash_password(body.new_password)
+    try:
+        new_password_hash = hash_password(body.new_password)
+    except PasswordTooLongError:
+        raise HTTPException(
+            status_code=422, detail="Password exceeds the 72-byte limit"
+        )
+    user.password_hash = new_password_hash
     user.token_version += 1
     db.delete(token_row)
     db.commit()

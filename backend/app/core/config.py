@@ -1,4 +1,3 @@
-import os
 import warnings
 from urllib.parse import urlparse
 
@@ -6,6 +5,8 @@ from pydantic import SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _DEFAULT_JWT_SECRET = "changeme-use-a-long-random-string"
+_MIN_JWT_SECRET_LENGTH = 32
+_ALLOWED_JWT_ALGORITHMS = frozenset({"HS256", "HS384", "HS512"})
 
 
 class Settings(BaseSettings):
@@ -20,6 +21,8 @@ class Settings(BaseSettings):
     # Per-scope rate limits (in-memory sliding window, single process)
     login_rate_limit: int = 10
     login_rate_window_seconds: int = 60
+    login_account_rate_limit: int = 10
+    login_account_rate_window_seconds: int = 900
     register_rate_limit: int = 25
     register_rate_window_seconds: int = 3600
     forgot_password_rate_limit: int = 5
@@ -32,8 +35,10 @@ class Settings(BaseSettings):
     change_email_rate_window_seconds: int = 3600
     send_now_rate_limit: int = 2
     send_now_rate_window_seconds: int = 3600
+    restore_rate_limit: int = 5
+    restore_rate_window_seconds: int = 3600
 
-    jwt_secret: str = _DEFAULT_JWT_SECRET
+    jwt_secret: SecretStr = SecretStr(_DEFAULT_JWT_SECRET)
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
@@ -94,20 +99,46 @@ class Settings(BaseSettings):
             )
         return v
 
-    @field_validator("jwt_secret")
+    @field_validator("jwt_algorithm")
     @classmethod
-    def jwt_secret_must_not_be_default(cls, v: str) -> str:
-        if v == _DEFAULT_JWT_SECRET:
-            if os.getenv("ENVIRONMENT", "development") == "production":
+    def jwt_algorithm_must_be_hmac(cls, v: str) -> str:
+        if v not in _ALLOWED_JWT_ALGORITHMS:
+            allowed = ", ".join(sorted(_ALLOWED_JWT_ALGORITHMS))
+            raise ValueError(f"JWT_ALGORITHM must be one of: {allowed}")
+        return v
+
+    @model_validator(mode="after")
+    def validate_jwt_secret(self) -> "Settings":
+        secret = self.jwt_secret.get_secret_value()
+        if self.is_production:
+            if secret == _DEFAULT_JWT_SECRET:
                 raise ValueError(
                     "JWT_SECRET is set to the default placeholder. "
                     "Set a strong random value via the JWT_SECRET environment variable."
                 )
+            if len(secret) < _MIN_JWT_SECRET_LENGTH:
+                raise ValueError(
+                    f"JWT_SECRET must be at least {_MIN_JWT_SECRET_LENGTH} characters "
+                    "in production."
+                )
+        elif secret == _DEFAULT_JWT_SECRET or len(secret) < _MIN_JWT_SECRET_LENGTH:
             warnings.warn(
-                "JWT_SECRET is set to the default placeholder — insecure for production.",
+                "JWT_SECRET is weak (default placeholder or shorter than "
+                f"{_MIN_JWT_SECRET_LENGTH} characters) — insecure for production.",
                 stacklevel=2,
             )
-        return v
+        return self
+
+    @model_validator(mode="after")
+    def warn_if_insecure_cookie_over_https(self) -> "Settings":
+        if not self.cookie_secure and self.app_base_url.lower().startswith("https://"):
+            warnings.warn(
+                f"APP_BASE_URL ({self.app_base_url}) is HTTPS but COOKIE_SECURE=false. "
+                "Session cookies are not marked Secure and can leak over plaintext "
+                "connections; set COOKIE_SECURE=true when serving over HTTPS.",
+                stacklevel=2,
+            )
+        return self
 
     @model_validator(mode="after")
     def warn_if_secure_cookie_over_http(self) -> "Settings":
