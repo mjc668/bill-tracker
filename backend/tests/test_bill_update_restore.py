@@ -384,6 +384,30 @@ def test_patch_weekly_to_monthly_clears_start_date_and_due_day(client_db):
     assert data["interval_count"] == 1
 
 
+def test_patch_weekly_to_monthly_collapses_duplicate_occurrences(client_db):
+    """Several weekly rows in one period must not collapse onto one date."""
+    client, db = client_db
+    token = register_and_login(client, "weekly_collapse@test.com")
+    today = date.today()
+    start = date(today.year, today.month, 1)
+    bill_id = _create_bill(
+        client,
+        token,
+        {"frequency": "weekly", "start_date": start.isoformat(), "due_day": None},
+    )
+
+    r = client.patch(
+        f"/bills/{bill_id}",
+        json={"frequency": "monthly", "due_day": 10},
+        headers=auth(token),
+    )
+    assert r.status_code == 200, r.text
+
+    rows = db.query(PaymentInstance).filter(PaymentInstance.bill_id == bill_id).all()
+    assert len(rows) == 1
+    assert rows[0].due_date == date(today.year, today.month, 10)
+
+
 def test_patch_monthly_to_weekly_requires_start_date(client_db):
     client, db = client_db
     token = register_and_login(client, "monthly_to_weekly@test.com")

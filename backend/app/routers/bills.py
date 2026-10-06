@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.database import get_db
 from app.core.deps import current_user
 from app.models.bill import BillTemplate, PaymentInstance, PaymentStatus
+from app.models.payment import Payment
 from app.models.user import User
 from app.schemas.bill import (
     BillTemplateCreate,
@@ -561,8 +562,39 @@ def update_bill(
             )
             .all()
         )
+        # A frequency change (e.g. weekly -> monthly) can leave several rows in
+        # one period; a monthly due-date recompute would collapse them onto the
+        # same date and break the (bill_id, due_date) key. Keep one event-free
+        # row per period, drop the redundant ones, and never touch rows that
+        # carry payment events.
+        with_events = (
+            {
+                row[0]
+                for row in db.query(Payment.instance_id)
+                .filter(Payment.instance_id.in_([inst.id for inst in unpaid]))
+                .all()
+            }
+            if unpaid
+            else set()
+        )
+        by_period: dict[str, list[PaymentInstance]] = {}
         for inst in unpaid:
-            inst.due_date = _due_date_for_period(inst.period, bill.due_day)
+            by_period.setdefault(inst.period, []).append(inst)
+        for period, rows in by_period.items():
+            target = _due_date_for_period(period, bill.due_day)
+            stable = [inst for inst in rows if inst.id in with_events]
+            plain = [inst for inst in rows if inst.id not in with_events]
+            if not plain:
+                continue
+            if any(inst.due_date == target for inst in stable):
+                for inst in plain:
+                    db.delete(inst)
+                continue
+            keeper = min(plain, key=lambda inst: inst.id)
+            keeper.due_date = target
+            for inst in plain:
+                if inst is not keeper:
+                    db.delete(inst)
 
     if body.recreate_deleted_future:
         current_period = date.today().strftime("%Y-%m")
