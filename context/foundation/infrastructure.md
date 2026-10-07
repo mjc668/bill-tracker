@@ -1,5 +1,5 @@
 ---
-project: pay-tracker
+project: bill-tracker
 researched_at: 2026-06-24
 updated: 2026-09-22
 recommended_platform: self-hosted-docker-compose
@@ -16,7 +16,7 @@ tech_stack:
 
 **Self-hosted Docker Compose with images published to GitHub Container Registry (GHCR).**
 
-Pay Tracker is built and distributed as a set of Docker images users pull and run via `docker compose up`. There is no required cloud platform — the deployment target is any Linux machine (VPS or local). When remote access is needed, a Hetzner CX22 VPS (~€4.30/month) fronted by Cloudflare's free proxy tier is the reference setup. This matches the PRD's explicit self-host intent, keeps costs near-zero, and avoids any vendor dependency at the MVP stage. Railway is the recommended cloud PaaS if the user later wants managed services without operational overhead.
+Bill Tracker is built and distributed as a set of Docker images users pull and run via `docker compose up`. There is no required cloud platform — the deployment target is any Linux machine (VPS or local). When remote access is needed, a Hetzner CX22 VPS (~€4.30/month) fronted by Cloudflare's free proxy tier is the reference setup. This matches the PRD's explicit self-host intent, keeps costs near-zero, and avoids any vendor dependency at the MVP stage. Railway is the recommended cloud PaaS if the user later wants managed services without operational overhead.
 
 ## Platform Comparison
 
@@ -59,7 +59,7 @@ Render offers managed multi-service deployments with a Frankfurt EU region and b
 
 ### Pre-Mortem — How This Could Fail
 
-The household self-hosted Pay Tracker on a Hetzner CX22 in 2026. Eight months later, the Postgres volume on the VPS disk filled up — Docker named volumes don't auto-expand, and nobody was monitoring disk usage. The `docker compose up` started failing with cryptic Postgres write errors. The pg_dump backup cron that was set up on day one had been silently failing for two months because the script's `pg_dump` path broke after a Docker image update changed the binary location. Restoring from the last good backup was possible but required manual SQL surgery to replay 6 weeks of missing data. The second failure: Let's Encrypt certificate renewal failed because the Certbot container wasn't in the Compose file — it had been set up separately via SSH and was forgotten when the server was reprovisioned. The PWA install broke for household members because the cert expired. Both failures were entirely preventable with monitoring, but monitoring wasn't included in the MVP scope.
+The household self-hosted Bill Tracker on a Hetzner CX22 in 2026. Eight months later, the Postgres volume on the VPS disk filled up — Docker named volumes don't auto-expand, and nobody was monitoring disk usage. The `docker compose up` started failing with cryptic Postgres write errors. The pg_dump backup cron that was set up on day one had been silently failing for two months because the script's `pg_dump` path broke after a Docker image update changed the binary location. Restoring from the last good backup was possible but required manual SQL surgery to replay 6 weeks of missing data. The second failure: Let's Encrypt certificate renewal failed because the Certbot container wasn't in the Compose file — it had been set up separately via SSH and was forgotten when the server was reprovisioned. The PWA install broke for household members because the cert expired. Both failures were entirely preventable with monitoring, but monitoring wasn't included in the MVP scope.
 
 ### Unknown Unknowns
 
@@ -69,15 +69,15 @@ The household self-hosted Pay Tracker on a Hetzner CX22 in 2026. Eight months la
 
 3. **Docker Compose `restart: unless-stopped` is not the same as systemd supervision.** If the VPS reboots, Docker itself must autostart (enabled by default on most distros), then Compose services restart. But if Docker fails to start (e.g., after a kernel update requiring a reboot), Compose services don't come up. Set `docker.service` as a systemd dependency: `systemctl enable docker`.
 
-4. **GHCR image visibility.** GitHub Container Registry images default to private if the repo is private. Publishing Pay Tracker images for self-hosters requires explicitly setting the package visibility to public or managing per-user access tokens — not automatic.
+4. **GHCR image visibility.** GitHub Container Registry images default to private if the repo is private. Publishing Bill Tracker images for self-hosters requires explicitly setting the package visibility to public or managing per-user access tokens — not automatic.
 
-5. **Cloudflare proxying WebSocket / long-poll.** Cloudflare's free plan proxies HTTP/HTTPS and WebSocket connections but has a 100-second timeout on connections. For Pay Tracker this is irrelevant (no WebSockets), but worth knowing if the app ever adds real-time features.
+5. **Cloudflare proxying WebSocket / long-poll.** Cloudflare's free plan proxies HTTP/HTTPS and WebSocket connections but has a 100-second timeout on connections. For Bill Tracker this is irrelevant (no WebSockets), but worth knowing if the app ever adds real-time features.
 
 ## Operational Story
 
 - **Preview deploys**: No platform-provided preview URLs. Test locally with `docker compose up --build` before pushing. For staging, a second VPS or a `staging` branch with a separate Compose override (`docker-compose.staging.yml`) is the standard pattern.
 - **Secrets**: `.env` file on the VPS (never committed). Copy to server via `scp .env user@server:/app/.env` or use a GitHub Actions secret → SSH deploy step that writes the file before `docker compose up`. Rotate by replacing the `.env` file and restarting the stack.
-- **Rollback**: `docker compose down && docker compose up -d` with a pinned image tag (`image: ghcr.io/youruser/pay-tracker-backend:sha-abc123`). Rollback time: ~60 seconds. DB migrations that ran during a bad deploy must be reversed manually with `alembic downgrade -1`.
+- **Rollback**: `docker compose down && docker compose up -d` with a pinned image tag (`image: ghcr.io/youruser/bill-tracker-backend:sha-abc123`). Rollback time: ~60 seconds. DB migrations that ran during a bad deploy must be reversed manually with `alembic downgrade -1`.
 - **Approval**: All production actions (deploy, rollback, secret rotation, server access) require a human SSH session. No unattended agent access to the VPS.
 - **Logs**: `docker compose logs -f --tail=100 backend` or `docker compose logs -f --tail=100 frontend`. For persistent logs across restarts: configure Docker's `json-file` log driver with `max-size: 10m` and `max-file: 3` in `/etc/docker/daemon.json`.
 
@@ -118,7 +118,7 @@ Stateless example:
 
 ```bash
 APPRISE_BASE_URL=http://apprise:8000
-APPRISE_URLS="ntfy://paytracker discord://1234/abcdef"
+APPRISE_URLS="ntfy://billtracker discord://1234/abcdef"
 ```
 
 Apprise failures fall back to email immediately (no queue or retry). `email_sent_at` is stamped only for email deliveries; reminder flags are set for any successful channel.
@@ -156,17 +156,17 @@ These steps assume Hetzner CX22 (Ubuntu 24.04) + Cloudflare DNS + GHCR image pub
      with:
        context: ./backend
        push: true
-       tags: ghcr.io/${{ github.repository_owner }}/pay-tracker-backend:${{ github.sha }}
+       tags: ghcr.io/${{ github.repository_owner }}/bill-tracker-backend:${{ github.sha }}
    ```
 
 3. **Write a production Compose file** (`docker-compose.prod.yml`) with pinned image tags instead of `build:` directives, pulling from GHCR:
    ```yaml
    services:
      backend:
-       image: ghcr.io/youruser/pay-tracker-backend:sha-abc123
+       image: ghcr.io/youruser/bill-tracker-backend:sha-abc123
        restart: unless-stopped
      frontend:
-       image: ghcr.io/youruser/pay-tracker-frontend:sha-abc123
+       image: ghcr.io/youruser/bill-tracker-frontend:sha-abc123
        restart: unless-stopped
    ```
 
@@ -260,7 +260,7 @@ Point the domain's nameservers at Cloudflare and proxy the A record to the host.
 ### Verify the install
 
 1. DevTools → Application → Cookies: `access_token` and `auth_logged_in` show the `Secure` flag.
-2. DevTools → Application → Service Workers: the service worker is active and the manifest lists the Pay Tracker icons.
+2. DevTools → Application → Service Workers: the service worker is active and the manifest lists the Bill Tracker icons.
 3. The install prompt appears (Chrome/Edge address bar; iOS Safari → Share → Add to Home Screen).
 4. Layout stays usable at 375px.
 

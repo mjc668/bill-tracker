@@ -1,5 +1,5 @@
 ---
-project: pay-tracker
+project: bill-tracker
 version: 1
 status: draft
 created: 2026-06-11
@@ -9,7 +9,7 @@ main_goal: low-complexity
 top_blocker: none
 ---
 
-# Roadmap: Pay Tracker
+# Roadmap: Bill Tracker
 
 > Derived from `context/foundation/prd.md` (v1) + auto-researched codebase baseline.
 > Edit-in-place; archive when superseded.
@@ -17,7 +17,7 @@ top_blocker: none
 
 ## Vision recap
 
-Pay Tracker replaces the household spreadsheet with a web app that automates the
+Bill Tracker replaces the household spreadsheet with a web app that automates the
 tedious, error-prone parts: each month's payment instance is generated automatically,
 the dashboard shows what's upcoming and overdue at a glance, and family members can
 mark bills paid from any device. Unlike subscription-based tools (YNAB, Mint), it
@@ -426,8 +426,8 @@ Shipped after the planned slices completed. Each maps to an archived change fold
 
 Operational follow-ups (not code slices):
 
-- **Install apprise-go, configure it, and connect it to Pay Tracker.**
-  1. **Install** apprise-go on the host (container or binary). It is CLI-only with no HTTP server, so it needs a small HTTP wrapper for Pay Tracker to call — or run `caronc/apprise` / `lscr.io/linuxserver/apprise-api` as the gateway instead.
+- **Install apprise-go, configure it, and connect it to Bill Tracker.**
+  1. **Install** apprise-go on the host (container or binary). It is CLI-only with no HTTP server, so it needs a small HTTP wrapper for Bill Tracker to call — or run `caronc/apprise` / `lscr.io/linuxserver/apprise-api` as the gateway instead.
   2. **Configure** the notification targets (Discord / ntfy / Gotify / email, etc.) in the gateway (its config file, storage, or `APPRISE_STATELESS_URLS`).
-  3. **Connect** Pay Tracker: set `APPRISE_BASE_URL` in the backend `.env` (optionally `APPRISE_KEY` for a saved config, `APPRISE_URLS` for per-request targets, `APPRISE_TIMEOUT_SECONDS`), redeploy, then Settings → Notifications → "Send test notification". See `.env.example` and `infrastructure.md` § Notification channels.
+  3. **Connect** Bill Tracker: set `APPRISE_BASE_URL` in the backend `.env` (optionally `APPRISE_KEY` for a saved config, `APPRISE_URLS` for per-request targets, `APPRISE_TIMEOUT_SECONDS`), redeploy, then Settings → Notifications → "Send test notification". See `.env.example` and `infrastructure.md` § Notification channels.
   - SMTP is optional legacy: reminders fall back to email only when it is configured; password reset still requires it.

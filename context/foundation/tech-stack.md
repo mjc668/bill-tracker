@@ -1,7 +1,7 @@
 ---
 starter_id: next
 package_manager: npm
-project_name: pay-tracker
+project_name: bill-tracker
 hints:
   language_family: multi
   team_size: solo
@@ -26,7 +26,7 @@ hints:
 
 ## Why this stack
 
-Pay Tracker is a solo, 7-week after-hours project with auth, background tasks
+Bill Tracker is a solo, 7-week after-hours project with auth, background tasks
 (auto-generated payment instances + email reminders), Excel/JSON export, and a
 self-hosted Docker Compose deployment target.
 The stack is intentionally polyglot: Next.js (TypeScript, App Router) is the
