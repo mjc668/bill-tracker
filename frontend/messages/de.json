@@ -130,6 +130,8 @@
         "noArchivedBills": "Keine archivierten Rechnungen",
         "willAppearHere": "Archivierte Rechnungen erscheinen hier",
         "archived": "Archiviert",
+        "unarchive": "Wiederherstellen",
+        "unarchiveFailed": "Rechnung konnte nicht wiederhergestellt werden.",
         "frequency": {
             "weekly": "{count, plural, one {Jede Woche} other {Alle # Wochen}}",
             "monthly": "{count, plural, one {Jeden Monat} other {Alle # Monate}}",

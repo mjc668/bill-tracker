@@ -81,6 +81,10 @@ export function archiveBill(id: number): Promise<void> {
   return apiFetch<void>(`/bills/${id}/archive`, { method: "POST" });
 }
 
+export function unarchiveBill(id: number): Promise<void> {
+  return apiFetch<void>(`/bills/${id}/unarchive`, { method: "POST" });
+}
+
 export function hasDeletedFuture(id: number): Promise<{ has_deleted_future: boolean }> {
   return apiFetch<{ has_deleted_future: boolean }>(`/bills/${id}/has-deleted-future`);
 }

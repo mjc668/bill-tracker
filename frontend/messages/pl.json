@@ -130,6 +130,8 @@
         "noArchivedBills": "Brak zarchiwizowanych rachunków",
         "willAppearHere": "Tutaj pojawią się zarchiwizowane rachunki",
         "archived": "Zarchiwizowany",
+        "unarchive": "Przywróć",
+        "unarchiveFailed": "Nie udało się przywrócić rachunku.",
         "frequency": {
             "weekly": "Co {count, plural, one {tydzień} few {tygodnie} many {tygodni} other {tygodnia}}",
             "monthly": "Co {count, plural, one {miesiąc} few {miesiące} many {miesięcy} other {miesiąca}}",

@@ -130,6 +130,8 @@
         "noArchivedBills": "No archived bills",
         "willAppearHere": "Bills you archive will appear here",
         "archived": "Archived",
+        "unarchive": "Unarchive",
+        "unarchiveFailed": "Failed to unarchive bill.",
         "frequency": {
             "weekly": "Every {count, plural, one {week} other {# weeks}}",
             "monthly": "Every {count, plural, one {month} other {# months}}",

@@ -40,6 +40,7 @@ from app.services.recurrence import (
     generate_next_instance,
     prune_occurrences_beyond_cap,
     recompute_weekly_instances,
+    seed_next_occurrence,
     validate_schedule,
 )
 
@@ -438,6 +439,31 @@ def generate_instances(
     return GenerateInstancesOut(
         created=created, bill_count=bill_count, months=body.months
     )
+
+
+# Declared with the literal-path routes, before the /{bill_id} block, so a
+# broader /{bill_id} route can never shadow it.
+@router.post("/{bill_id}/unarchive", response_model=BillTemplateOut)
+def unarchive_bill(
+    bill_id: int,
+    db: Session = Depends(get_db),
+    me: User = Depends(current_user),
+):
+    """Restore an archived bill and resume from the next scheduled occurrence.
+
+    Archived/skipped periods are not backfilled; only the first occurrence
+    on/after today is seeded (idempotent on `(bill_id, due_date)` and
+    cap-aware).
+    """
+    bill = db.get(BillTemplate, bill_id)
+    if not bill or bill.user_id != me.id:
+        raise HTTPException(status_code=404, detail="Bill not found")
+    bill.is_archived = False
+    bill.is_paused = False
+    seed_next_occurrence(db, bill, date.today())
+    db.commit()
+    db.refresh(bill)
+    return bill
 
 
 @router.get("/{bill_id}/has-deleted-future", response_model=HasDeletedFutureOut)

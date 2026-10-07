@@ -427,6 +427,107 @@ def prune_occurrences_beyond_cap(
     return deleted
 
 
+def _first_active_period_on_or_after(template: BillTemplate, today: date) -> str | None:
+    """First month-anchored period on/after today whose due date is not past.
+
+    The scan is bounded so an annual bill or a long paused gap cannot loop
+    forever: one full recurrence step plus one month, with a 24-month floor
+    (e.g. 60 // interval steps for monthly bills).
+    """
+    period = today.strftime("%Y-%m")
+    limit = max(24, _step_months(template) + 1)
+    for _ in range(limit):
+        if _bill_active_in_period(template, period) and (
+            _due_date_for_period(period, template.due_day) >= today
+        ):
+            return period
+        period = _add_months(period, 1)
+    return None
+
+
+def seed_next_occurrence(
+    db: Session, template: BillTemplate, today: date
+) -> PaymentInstance | None:
+    """Seed the first scheduled occurrence on/after `today` for a resumed bill.
+
+    Used when a template is unarchived/unpaused: archived or skipped periods
+    are deliberately not backfilled. A non-deleted instance already on/after
+    `today` (or a tombstone on the target date) blocks creation — existence is
+    checked on `(bill_id, due_date)` ignoring `is_deleted`, so a deleted date is
+    never resurrected. When the target sits at/past the occurrence cap but the
+    bill has fewer rows than the cap, the schedule is re-anchored to the target
+    and the cap is reduced by the existing row count; if nothing remains, no
+    occurrence is created.
+
+    The new instance is appended to the session without committing — the
+    caller owns the commit. Returns the row occupying the target date (new or
+    pre-existing), or None when the schedule produces nothing.
+    """
+    live = (
+        db.query(PaymentInstance)
+        .filter(
+            PaymentInstance.bill_id == template.id,
+            PaymentInstance.is_deleted.is_(False),
+            PaymentInstance.due_date >= today,
+        )
+        .order_by(PaymentInstance.due_date, PaymentInstance.id)
+        .first()
+    )
+    if live is not None:
+        return live
+
+    if template.frequency == BillFrequency.one_off:
+        anchor = template.start_period or template.created_at.strftime("%Y-%m")
+        candidate = _due_date_for_period(anchor, template.due_day)
+    elif template.frequency == BillFrequency.weekly:
+        if template.start_date is None:
+            return None
+        candidate = _first_occurrence_on_or_after(
+            template.start_date, template.interval_count, today
+        )
+    else:
+        period = _first_active_period_on_or_after(template, today)
+        if period is None:
+            return None
+        candidate = _due_date_for_period(period, template.due_day)
+
+    existing = (
+        db.query(PaymentInstance)
+        .filter(
+            PaymentInstance.bill_id == template.id,
+            PaymentInstance.due_date == candidate,
+        )
+        .first()
+    )
+    if existing is not None:
+        return existing
+
+    if _cap_reached(template, candidate):
+        assert template.max_occurrences is not None
+        row_count = (
+            db.query(PaymentInstance)
+            .filter(PaymentInstance.bill_id == template.id)
+            .count()
+        )
+        remaining = template.max_occurrences - row_count
+        if remaining <= 0:
+            return None
+        if template.frequency == BillFrequency.weekly:
+            template.start_date = candidate
+        template.start_period = candidate.strftime("%Y-%m")
+        template.max_occurrences = remaining
+
+    instance = PaymentInstance(
+        bill_id=template.id,
+        period=candidate.strftime("%Y-%m"),
+        due_date=candidate,
+        amount=template.amount,
+        status=PaymentStatus.upcoming,
+    )
+    db.add(instance)
+    return instance
+
+
 def recompute_weekly_instances(db: Session, template: BillTemplate, today: date) -> int:
     """Re-space future unpaid instances after a weekly schedule change.
 

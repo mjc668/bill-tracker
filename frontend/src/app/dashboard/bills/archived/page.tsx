@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Archive, ChevronRight, ChevronsUpDown } from "lucide-react";
+import { Archive, ArchiveRestore, ChevronRight, ChevronsUpDown, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { fetchBills, normalizeBillFrequency, type BillTemplateOut } from "@/lib/bills-api";
+import {
+  fetchBills,
+  normalizeBillFrequency,
+  unarchiveBill,
+  type BillTemplateOut,
+} from "@/lib/bills-api";
 import { fetchCategories, categoryLabel, type Category } from "@/lib/categories-api";
 import { sortCategories } from "@/lib/categories";
 import { SessionExpiredError } from "@/lib/api";
@@ -18,6 +23,29 @@ export default function ArchivedBillsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [unarchivingId, setUnarchivingId] = useState<number | null>(null);
+  const [unarchiveError, setUnarchiveError] = useState<{
+    id: number;
+    message: string;
+  } | null>(null);
+
+  async function handleUnarchive(id: number) {
+    if (unarchivingId !== null) return;
+    setUnarchivingId(id);
+    setUnarchiveError(null);
+    try {
+      await unarchiveBill(id);
+      setTemplates((prev) => prev.filter((tmpl) => tmpl.id !== id));
+    } catch (err) {
+      if (err instanceof SessionExpiredError) return;
+      setUnarchiveError({
+        id,
+        message: err instanceof Error ? err.message : t("unarchiveFailed"),
+      });
+    } finally {
+      setUnarchivingId(null);
+    }
+  }
 
   const activeCategories = sortCategories(
     categories.filter((category) =>
@@ -159,10 +187,30 @@ export default function ArchivedBillsPage() {
                               </span>
                             )}
                         </div>
+                        {unarchiveError?.id === tmpl.id && (
+                          <p className="text-xs text-red-600 dark:text-red-400">
+                            {unarchiveError.message}
+                          </p>
+                        )}
                       </div>
-                      <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400">
-                        {t("archived")}
-                      </span>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                          {t("archived")}
+                        </span>
+                        <button
+                          onClick={() => void handleUnarchive(tmpl.id)}
+                          disabled={unarchivingId === tmpl.id}
+                          aria-label={t("unarchive")}
+                          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-500 shadow-sm transition-all hover:border-green-300 hover:bg-green-50 hover:text-green-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
+                        >
+                          {unarchivingId === tmpl.id ? (
+                            <Loader2 size={15} className="animate-spin" />
+                          ) : (
+                            <ArchiveRestore size={15} />
+                          )}
+                          <span className="hidden sm:inline">{t("unarchive")}</span>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>}
