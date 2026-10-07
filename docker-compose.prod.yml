@@ -29,7 +29,7 @@ services:
       - no-new-privileges:true
 
   backend:
-    image: ghcr.io/mjc668/bill-tracker-backend:${BILL_TRACKER_VERSION:?Set BILL_TRACKER_VERSION (e.g. 3.0.0)}
+    image: ghcr.io/mjc668/bill-tracker-backend:${BILL_TRACKER_VERSION:?Set BILL_TRACKER_VERSION (e.g. 3.1.0)}
     container_name: backend
     restart: unless-stopped
     env_file: .env
@@ -54,7 +54,7 @@ services:
       - no-new-privileges:true
 
   frontend:
-    image: ghcr.io/mjc668/bill-tracker-frontend:${BILL_TRACKER_VERSION:?Set BILL_TRACKER_VERSION (e.g. 3.0.0)}
+    image: ghcr.io/mjc668/bill-tracker-frontend:${BILL_TRACKER_VERSION:?Set BILL_TRACKER_VERSION (e.g. 3.1.0)}
     container_name: frontend
     restart: unless-stopped
     # No env_file here: the frontend must not receive backend secrets such as
@@ -84,7 +84,7 @@ services:
       - no-new-privileges:true
 
   demo-data:
-    image: ghcr.io/mjc668/bill-tracker-demo:${BILL_TRACKER_VERSION:?Set BILL_TRACKER_VERSION (e.g. 3.0.0)}
+    image: ghcr.io/mjc668/bill-tracker-demo:${BILL_TRACKER_VERSION:?Set BILL_TRACKER_VERSION (e.g. 3.1.0)}
     container_name: demo-data
     profiles: ["demo"]
     depends_on:

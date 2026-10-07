@@ -21,7 +21,7 @@ No third-party data sharing. No subscription. Runs locally with Docker Compose o
 - **Multiple household users** — register separate accounts for each family member; every account's bills, payments, categories and settings are fully isolated.
 - **Recurring bills** — define a bill once: name, category, amount, currency, recurrence (weekly / every-N weeks, monthly / every-N months, yearly / every-N years, or one-off) with an optional occurrence limit. Bill Tracker generates payment instances automatically each period.
 - **Payment ledger** — mark a payment as paid with partial amounts, an actual payment date, and a note; over/underpayments are visible against the expected amount, and reverting a payment removes it.
-- **Archive, never delete** — archiving a template hides it from active views while preserving its payment history.
+- **Archive, unarchive, never delete** — archiving a template hides it from active views while preserving its payment history; unarchiving resumes it from the next due date without backfilling the missed periods.
 - **Dashboard** — rolling windows with overdue aging, bills-vs-payments chart, upcoming forecast, and category breakdown.
 - **Payments calendar and filters** — browse any month as a calendar or list, and filter payments by status, category, or bill.
 - **Editable, translatable categories** — add, rename, reorder and archive categories in Settings; defaults cover common household bills.
@@ -59,7 +59,7 @@ To try it with pre-seeded demo data instead of starting empty:
 docker compose -f docker-compose.prod.yml --profile demo up -d
 ```
 
-`BILL_TRACKER_VERSION` is required — there is no implicit `:latest`. Set it in `.env` or per-command (e.g. `BILL_TRACKER_VERSION=3.0.0 docker compose -f docker-compose.prod.yml up -d`).
+`BILL_TRACKER_VERSION` is required — there is no implicit `:latest`. Set it in `.env` or per-command (e.g. `BILL_TRACKER_VERSION=3.1.0 docker compose -f docker-compose.prod.yml up -d`).
 
 
 ## Getting started
@@ -110,7 +110,7 @@ The settings page also shows the current server time (UTC) so you can set send t
 | --- | --- | --- |
 | `POSTGRES_PASSWORD` | yes | PostgreSQL password — generate with `openssl rand -hex 24`; an empty value aborts the stack |
 | `JWT_SECRET` | yes | JWT signing secret — use a long random string |
-| `BILL_TRACKER_VERSION` | yes (prod compose) | Released image tag to run, e.g. `3.0.0` — there is no implicit `:latest` |
+| `BILL_TRACKER_VERSION` | yes (prod compose) | Released image tag to run, e.g. `3.1.0` — there is no implicit `:latest` |
 | `DATABASE_URL` | yes | PostgreSQL connection string |
 | `NEXT_PUBLIC_API_URL` | yes | Backend URL as seen by the browser |
 | `APPRISE_BASE_URL` | no | Apprise API gateway base URL (recommended notification channel) |
@@ -172,6 +172,26 @@ docker compose exec backend uv run alembic revision --autogenerate -m "describe 
 The production compose file binds the frontend and backend to localhost only; put a TLS-terminating reverse proxy (Caddy, nginx + Certbot, or Cloudflare) in front. PostgreSQL runs as its own `postgres` service with a named volume — the database is not co-located in the backend container.
 
 Full guides for Caddy, nginx + Certbot, and Cloudflare — including HTTPS/PWA requirements — are in [`context/foundation/infrastructure.md`](context/foundation/infrastructure.md#https--pwa-deployment).
+
+
+## Updating
+
+Set `BILL_TRACKER_VERSION` in `.env` to the release you want, then pull and recreate:
+
+```bash
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Database migrations run automatically when the backend starts. The running version is shown at the bottom-right of the app.
+
+**Bill Tracker renamed its images in 3.0.0.** Images moved from `ghcr.io/mjc668/pay-tracker-*` to `ghcr.io/mjc668/bill-tracker-*`, and `PAY_TRACKER_VERSION` became `BILL_TRACKER_VERSION`. The old image names are frozen at 2.6.0, so any tooling that tracks the image a container was created with — the Unraid Docker tab, Compose Manager, update notifiers like Diun — will stop reporting updates until the reference is changed:
+
+- **Docker Compose on the host:** re-download `docker-compose.prod.yml` (or copy the new `image:` lines), rename the env var to `BILL_TRACKER_VERSION=3.1.0`, then `pull` + `up -d`.
+- **Unraid Docker tab:** edit each container → change **Repository** to `ghcr.io/mjc668/bill-tracker-backend` / `ghcr.io/mjc668/bill-tracker-frontend` (tag `3.1.0` or `latest`), Apply, then pull. Unraid's "update available" check only looks at that repository field.
+- **Unraid Compose Manager (or any compose stack):** update the stack's compose/env files the same way, then `docker compose pull && docker compose up -d`.
+
+Upgrading from 2.x also logs everyone out once (the JWT issuer/audience changed in 3.0.0) — that is expected; sign in again afterwards.
 
 
 ## Installing as a PWA
