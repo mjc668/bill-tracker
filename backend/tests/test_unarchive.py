@@ -1,8 +1,9 @@
-"""Tests for POST /bills/{id}/unarchive — resume-next-date seeding.
+"""Tests for POST /bills/{id}/unarchive — current-period resume seeding.
 
-Covers the unarchive contract: flags are cleared, the first scheduled
-occurrence on/after today is seeded without backfilling the archived gap,
-idempotency (including tombstones), cap re-anchoring, and cross-user 404.
+Covers the unarchive contract: flags are cleared and the bill resumes exactly
+like an active one — the current period's occurrences are seeded (past-due
+included, shown as overdue) while earlier periods are never backfilled. Also
+covers idempotency (including tombstones), cap re-anchoring, and cross-user 404.
 """
 
 from datetime import date, timedelta
@@ -12,8 +13,8 @@ from fastapi.testclient import TestClient
 from app.models.bill import BillTemplate, PaymentInstance, PaymentStatus
 from app.services.recurrence import (
     _due_date_for_period,
-    _first_occurrence_on_or_after,
-    seed_next_occurrence,
+    _weekly_occurrences_in_period,
+    seed_resumed_occurrences,
 )
 from tests.conftest import auth, register_and_login
 
@@ -74,41 +75,33 @@ def _shift_period(period: str, delta: int) -> str:
     return f"{total // 12:04d}-{total % 12 + 1:02d}"
 
 
-def _next_candidate(today: date, due_day: int) -> tuple[str, date]:
-    """The first period/due date on/after today, mirroring seed semantics."""
-    current = today.strftime("%Y-%m")
-    period = current
-    if _due_date_for_period(period, due_day) < today:
-        period = _shift_period(current, 1)
-    return period, _due_date_for_period(period, due_day)
-
-
 def _archive(client: TestClient, token: str, bill_id: int) -> None:
     r = client.post(f"/bills/{bill_id}/archive", headers=auth(token))
     assert r.status_code == 204, r.text
 
 
 # ---------------------------------------------------------------------------
-# Resume semantics — no gap backfill
+# Resume semantics — current period, no gap backfill
 # ---------------------------------------------------------------------------
 
 
-def test_unarchive_monthly_resumes_next_due_without_gap(client_db):
-    """Paused/archived monthly bill seeds exactly one occurrence >= today."""
+def test_unarchive_monthly_seeds_current_period_without_gap(client_db):
+    """A resumed monthly bill seeds the current month even when already due."""
     client, db = client_db
     token = register_and_login(client, "monthly_resume@test.com")
     today = date.today()
+    current = today.strftime("%Y-%m")
 
     overrides: dict = {"is_paused": True, "due_day": 1}
     if today.month > 2:
         overrides["due_month"] = today.month - 2  # past due_month
     bill_id = _create_bill(client, token, overrides)
 
-    # Creation backfills the paused gap; clear it and backdate the anchor so
-    # the bill looks like a long-archived schedule with no live history.
+    # Creation backfills nothing while paused; backdate the anchor so the bill
+    # looks like a long-archived schedule with no live history.
     db.query(PaymentInstance).filter(PaymentInstance.bill_id == bill_id).delete()
     bill = db.get(BillTemplate, bill_id)
-    bill.start_period = _shift_period(today.strftime("%Y-%m"), -3)
+    bill.start_period = _shift_period(current, -3)
     db.commit()
 
     _archive(client, token, bill_id)
@@ -118,19 +111,27 @@ def test_unarchive_monthly_resumes_next_due_without_gap(client_db):
     assert data["is_archived"] is False
     assert data["is_paused"] is False
 
-    expected_period, expected_due = _next_candidate(today, 1)
     rows = _rows(db, bill_id)
     assert len(rows) == 1  # no gap rows
-    assert rows[0].due_date == expected_due
-    assert rows[0].due_date >= today
-    assert rows[0].period == expected_period
+    assert rows[0].period == current
+    assert rows[0].due_date == _due_date_for_period(current, 1)
+
+    # The API reports it as overdue once the due date has passed.
+    if rows[0].due_date < today:
+        payments = client.get(
+            f"/bills/payments?month={current}", headers=auth(token)
+        ).json()
+        mine = [p for p in payments if p["bill_id"] == bill_id]
+        assert len(mine) == 1
+        assert mine[0]["status"] == "overdue"
 
 
-def test_unarchive_weekly_resumes_only_next_occurrence(client_db):
-    """Weekly resume seeds the first occurrence >= today, not the gap."""
+def test_unarchive_weekly_seeds_current_month_occurrences(client_db):
+    """Weekly resume seeds the current month's occurrences, not prior months."""
     client, db = client_db
     token = register_and_login(client, "weekly_resume@test.com")
     today = date.today()
+    current = today.strftime("%Y-%m")
     start = today - timedelta(days=21)
 
     bill_id = _create_bill(
@@ -150,10 +151,11 @@ def test_unarchive_weekly_resumes_only_next_occurrence(client_db):
     r = client.post(f"/bills/{bill_id}/unarchive", headers=auth(token))
     assert r.status_code == 200, r.text
 
+    bill = db.get(BillTemplate, bill_id)
+    expected = _weekly_occurrences_in_period(bill, current)
     rows = _rows(db, bill_id)
-    assert len(rows) == 1
-    assert rows[0].due_date == _first_occurrence_on_or_after(start, 1, today)
-    assert rows[0].due_date >= today
+    assert [row.due_date for row in rows] == expected
+    assert all(row.period == current for row in rows)
 
 
 def test_unarchive_one_off_past_due_creates_overdue_occurrence(client_db):
@@ -218,10 +220,10 @@ def test_unarchive_twice_creates_one_row(client_db):
     assert rows[0].due_date == today
 
 
-def test_unarchive_existing_future_instance_not_duplicated(client_db):
-    """An already-present live future instance blocks seeding."""
+def test_unarchive_existing_current_instance_not_duplicated(client_db):
+    """An already-present current-period instance is not duplicated."""
     client, db = client_db
-    token = register_and_login(client, "existing_future@test.com")
+    token = register_and_login(client, "existing_current@test.com")
     today = date.today()
     bill_id = _create_bill(client, token, {"is_paused": True, "due_day": today.day})
     existing = _insert_instance(db, bill_id, today.strftime("%Y-%m"), today)
@@ -233,6 +235,28 @@ def test_unarchive_existing_future_instance_not_duplicated(client_db):
     rows = _rows(db, bill_id)
     assert len(rows) == 1
     assert rows[0].id == existing.id
+
+
+def test_unarchive_seeds_current_period_even_with_a_future_instance(client_db):
+    """An existing next-month instance does not skip the current-period seed."""
+    client, db = client_db
+    token = register_and_login(client, "existing_future@test.com")
+    today = date.today()
+    current = today.strftime("%Y-%m")
+    next_period = _shift_period(current, 1)
+    bill_id = _create_bill(client, token, {"is_paused": True, "due_day": today.day})
+    future = _insert_instance(
+        db, bill_id, next_period, _due_date_for_period(next_period, today.day)
+    )
+    _archive(client, token, bill_id)
+
+    r = client.post(f"/bills/{bill_id}/unarchive", headers=auth(token))
+    assert r.status_code == 200, r.text
+
+    rows = _rows(db, bill_id)
+    assert [row.period for row in rows] == [current, next_period]
+    assert future.id in [row.id for row in rows]
+    assert rows[0].due_date == today
 
 
 def test_unarchive_respects_tombstone_at_candidate_date(client_db):
@@ -265,6 +289,7 @@ def test_unarchive_cap_reached_reanchors_then_is_capped_out(client_db):
     client, db = client_db
     token = register_and_login(client, "cap_reanchor@test.com")
     today = date.today()
+    current = today.strftime("%Y-%m")
 
     bill_id = _create_bill(
         client,
@@ -272,7 +297,7 @@ def test_unarchive_cap_reached_reanchors_then_is_capped_out(client_db):
         {"is_paused": True, "max_occurrences": 1, "due_day": 1},
     )
     bill = db.get(BillTemplate, bill_id)
-    bill.start_period = _shift_period(today.strftime("%Y-%m"), -3)
+    bill.start_period = _shift_period(current, -3)
     db.commit()
 
     _archive(client, token, bill_id)
@@ -280,13 +305,12 @@ def test_unarchive_cap_reached_reanchors_then_is_capped_out(client_db):
     assert r.status_code == 200, r.text
     data = r.json()
 
-    expected_period, expected_due = _next_candidate(today, 1)
     assert data["max_occurrences"] == 1  # 1 - 0 existing rows
-    assert data["start_period"] == expected_period  # re-anchored
+    assert data["start_period"] == current  # re-anchored to the current cycle
 
     rows = _rows(db, bill_id)
     assert len(rows) == 1
-    assert rows[0].due_date == expected_due
+    assert rows[0].due_date == _due_date_for_period(current, 1)
 
     # A second archive/unarchive resumes the existing instance: capped out.
     _archive(client, token, bill_id)
@@ -314,10 +338,10 @@ def test_unarchive_cap_exhausted_by_existing_rows_creates_nothing(client_db):
 
     db.expire_all()
     bill = db.get(BillTemplate, bill_id)
-    result = seed_next_occurrence(db, bill, today)
+    created = seed_resumed_occurrences(db, bill, today)
     db.commit()
 
-    assert result is None
+    assert created == []
     assert bill.max_occurrences == 1  # cap not reduced further
     assert bill.start_period == past_period  # schedule not re-anchored
     assert len(_rows(db, bill_id)) == 1

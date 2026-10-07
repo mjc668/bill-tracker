@@ -21,7 +21,7 @@ No third-party data sharing. No subscription. Runs locally with Docker Compose o
 - **Multiple household users** — register separate accounts for each family member; every account's bills, payments, categories and settings are fully isolated.
 - **Recurring bills** — define a bill once: name, category, amount, currency, recurrence (weekly / every-N weeks, monthly / every-N months, yearly / every-N years, or one-off) with an optional occurrence limit. Bill Tracker generates payment instances automatically each period.
 - **Payment ledger** — mark a payment as paid with partial amounts, an actual payment date, and a note; over/underpayments are visible against the expected amount, and reverting a payment removes it.
-- **Archive, unarchive, never delete** — archiving a template hides it from active views while preserving its payment history; unarchiving resumes it from the next due date without backfilling the missed periods.
+- **Archive, unarchive, never delete** — archiving a template hides it from active views while preserving its payment history; unarchiving resumes it like an active bill (the current period's payments are generated, past-due included) without backfilling earlier periods.
 - **Dashboard** — rolling windows with overdue aging, bills-vs-payments chart, upcoming forecast, and category breakdown.
 - **Payments calendar and filters** — browse any month as a calendar or list, and filter payments by status, category, or bill.
 - **Editable, translatable categories** — add, rename, reorder and archive categories in Settings; defaults cover common household bills.

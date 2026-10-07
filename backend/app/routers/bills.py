@@ -40,7 +40,7 @@ from app.services.recurrence import (
     generate_next_instance,
     prune_occurrences_beyond_cap,
     recompute_weekly_instances,
-    seed_next_occurrence,
+    seed_resumed_occurrences,
     validate_schedule,
 )
 
@@ -460,7 +460,7 @@ def unarchive_bill(
         raise HTTPException(status_code=404, detail="Bill not found")
     bill.is_archived = False
     bill.is_paused = False
-    seed_next_occurrence(db, bill, date.today())
+    seed_resumed_occurrences(db, bill, date.today())
     db.commit()
     db.refresh(bill)
     return bill

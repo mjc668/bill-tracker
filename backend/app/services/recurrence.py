@@ -151,6 +151,20 @@ def _weekly_occurrences_in_period(template: BillTemplate, period: str) -> list[d
     return occurrences
 
 
+def _raw_occurrences_in_period(template: BillTemplate, period: str) -> list[date]:
+    """Scheduled due dates in a period, before the occurrence cap is applied."""
+    if template.frequency == BillFrequency.weekly:
+        return _weekly_occurrences_in_period(template, period)
+    if template.frequency == BillFrequency.one_off:
+        anchor = template.start_period or template.created_at.strftime("%Y-%m")
+        return (
+            [_due_date_for_period(period, template.due_day)] if period == anchor else []
+        )
+    if _bill_active_in_period(template, period):
+        return [_due_date_for_period(period, template.due_day)]
+    return []
+
+
 def _occurrences_in_period(template: BillTemplate, period: str) -> list[date]:
     """Due dates this template's schedule produces inside a "YYYY-MM" period.
 
@@ -160,20 +174,10 @@ def _occurrences_in_period(template: BillTemplate, period: str) -> list[date]:
     here — the single funnel shared by seeding, backfill, the series generator
     and the dashboard forecast.
     """
-    if template.frequency == BillFrequency.weekly:
-        occurrences = _weekly_occurrences_in_period(template, period)
-    elif template.frequency == BillFrequency.one_off:
-        anchor = template.start_period or template.created_at.strftime("%Y-%m")
-        occurrences = (
-            [_due_date_for_period(period, template.due_day)] if period == anchor else []
-        )
-    elif _bill_active_in_period(template, period):
-        occurrences = [_due_date_for_period(period, template.due_day)]
-    else:
-        occurrences = []
-
     return [
-        due_date for due_date in occurrences if not _cap_reached(template, due_date)
+        due_date
+        for due_date in _raw_occurrences_in_period(template, period)
+        if not _cap_reached(template, due_date)
     ]
 
 
@@ -445,87 +449,101 @@ def _first_active_period_on_or_after(template: BillTemplate, today: date) -> str
     return None
 
 
-def seed_next_occurrence(
-    db: Session, template: BillTemplate, today: date
-) -> PaymentInstance | None:
-    """Seed the first scheduled occurrence on/after `today` for a resumed bill.
-
-    Used when a template is unarchived/unpaused: archived or skipped periods
-    are deliberately not backfilled. A non-deleted instance already on/after
-    `today` (or a tombstone on the target date) blocks creation — existence is
-    checked on `(bill_id, due_date)` ignoring `is_deleted`, so a deleted date is
-    never resurrected. When the target sits at/past the occurrence cap but the
-    bill has fewer rows than the cap, the schedule is re-anchored to the target
-    and the cap is reduced by the existing row count; if nothing remains, no
-    occurrence is created.
-
-    The new instance is appended to the session without committing — the
-    caller owns the commit. Returns the row occupying the target date (new or
-    pre-existing), or None when the schedule produces nothing.
-    """
-    live = (
-        db.query(PaymentInstance)
-        .filter(
-            PaymentInstance.bill_id == template.id,
-            PaymentInstance.is_deleted.is_(False),
-            PaymentInstance.due_date >= today,
-        )
-        .order_by(PaymentInstance.due_date, PaymentInstance.id)
-        .first()
-    )
-    if live is not None:
-        return live
-
+def _next_active_occurrence(template: BillTemplate, today: date) -> date | None:
+    """First occurrence on/after `today` for a template not active this period."""
     if template.frequency == BillFrequency.one_off:
         anchor = template.start_period or template.created_at.strftime("%Y-%m")
-        candidate = _due_date_for_period(anchor, template.due_day)
-    elif template.frequency == BillFrequency.weekly:
+        return _due_date_for_period(anchor, template.due_day)
+    if template.frequency == BillFrequency.weekly:
         if template.start_date is None:
             return None
-        candidate = _first_occurrence_on_or_after(
+        return _first_occurrence_on_or_after(
             template.start_date, template.interval_count, today
         )
-    else:
-        period = _first_active_period_on_or_after(template, today)
-        if period is None:
-            return None
-        candidate = _due_date_for_period(period, template.due_day)
+    period = _first_active_period_on_or_after(template, today)
+    return _due_date_for_period(period, template.due_day) if period else None
 
-    existing = (
-        db.query(PaymentInstance)
-        .filter(
-            PaymentInstance.bill_id == template.id,
-            PaymentInstance.due_date == candidate,
-        )
-        .first()
+
+def _reanchor_for_cap(
+    db: Session, template: BillTemplate, dates: list[date], period: str
+) -> list[date]:
+    """Re-anchor a cap-blocked schedule so its remaining payments resume.
+
+    Used when a period's occurrences already sit at/past the cap by anchor
+    index (the bill was paused across periods) while fewer rows exist than the
+    cap. Returns the dates to seed after re-anchoring and reducing the cap.
+    """
+    assert template.max_occurrences is not None
+    row_count = (
+        db.query(PaymentInstance).filter(PaymentInstance.bill_id == template.id).count()
     )
-    if existing is not None:
-        return existing
+    remaining = template.max_occurrences - row_count
+    if remaining <= 0:
+        return []
+    if template.frequency == BillFrequency.weekly:
+        template.start_date = dates[0]
+    template.start_period = period
+    template.max_occurrences = remaining
+    return dates[:remaining]
 
-    if _cap_reached(template, candidate):
-        assert template.max_occurrences is not None
-        row_count = (
-            db.query(PaymentInstance)
-            .filter(PaymentInstance.bill_id == template.id)
-            .count()
+
+def seed_resumed_occurrences(
+    db: Session, template: BillTemplate, today: date
+) -> list[PaymentInstance]:
+    """Seed the current period's occurrences for a resumed (unarchived) bill.
+
+    Behaves like the normal current-period seeder so a resumed bill looks
+    exactly like an active one: this month's occurrences are created even when
+    their due date has already passed (they show as overdue). Periods before
+    the current month are never backfilled. When the template is not active in
+    the current period (e.g. an annual bill whose month is elsewhere), the next
+    scheduled occurrence is seeded instead.
+
+    Existence is keyed on `(bill_id, due_date)` including soft-deleted
+    tombstones (a deleted date is never resurrected) and the occurrence cap is
+    respected with schedule re-anchoring. New rows are appended to the session
+    without committing — the caller owns the commit.
+    """
+    current = today.strftime("%Y-%m")
+    raw = _raw_occurrences_in_period(template, current)
+    candidates = _occurrences_in_period(template, current)
+
+    if raw and not candidates and template.max_occurrences is not None:
+        candidates = _reanchor_for_cap(db, template, raw, current)
+    elif not raw:
+        candidate = _next_active_occurrence(template, today)
+        if candidate is None:
+            candidates = []
+        elif _cap_reached(template, candidate):
+            candidates = _reanchor_for_cap(
+                db, template, [candidate], candidate.strftime("%Y-%m")
+            )
+        else:
+            candidates = [candidate]
+
+    if not candidates:
+        return []
+
+    existing_dates = {
+        row.due_date
+        for row in db.query(PaymentInstance.due_date).filter(
+            PaymentInstance.bill_id == template.id
         )
-        remaining = template.max_occurrences - row_count
-        if remaining <= 0:
-            return None
-        if template.frequency == BillFrequency.weekly:
-            template.start_date = candidate
-        template.start_period = candidate.strftime("%Y-%m")
-        template.max_occurrences = remaining
-
-    instance = PaymentInstance(
-        bill_id=template.id,
-        period=candidate.strftime("%Y-%m"),
-        due_date=candidate,
-        amount=template.amount,
-        status=PaymentStatus.upcoming,
-    )
-    db.add(instance)
-    return instance
+    }
+    created: list[PaymentInstance] = []
+    for due_date in candidates:
+        if due_date in existing_dates:
+            continue
+        instance = PaymentInstance(
+            bill_id=template.id,
+            period=due_date.strftime("%Y-%m"),
+            due_date=due_date,
+            amount=template.amount,
+            status=PaymentStatus.upcoming,
+        )
+        db.add(instance)
+        created.append(instance)
+    return created
 
 
 def recompute_weekly_instances(db: Session, template: BillTemplate, today: date) -> int:

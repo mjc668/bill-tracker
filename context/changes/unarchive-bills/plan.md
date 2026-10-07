@@ -3,16 +3,17 @@
 ## Frozen contract
 
 - `POST /bills/{bill_id}/unarchive` → 200 `BillTemplateOut`. 404 for missing/other-user IDs (uniform, per the recent hardening). Sets `is_archived = False` **and** `is_paused = False`, then seeds the next occurrence.
-- **Resume semantics:** the first scheduled occurrence strictly on/after today is created; archived/skipped periods are NOT backfilled. If the bill already has a non-deleted instance on/after today, nothing new is created.
-  - weekly: first occurrence ≥ today (`_first_occurrence_on_or_after`)
-  - monthly/annual: first active period from the current month forward whose due date is ≥ today (`_bill_active_in_period` + `_due_date_for_period`, advancing until the date is current/future)
+- **Resume semantics:** the bill resumes exactly like an active one — the **current period's** occurrences are seeded, including ones whose due date has already passed (they show as overdue). Periods before the current month are NOT backfilled.
+  - weekly: every occurrence in the current month (`_raw_occurrences_in_period`)
+  - monthly/annual active this period: this period's due date
+  - not active this period (annual in another month): the next scheduled occurrence on/after today
   - one_off: its single anchor due date (may be in the past — created overdue)
 - Idempotent: existence is checked on `(bill_id, due_date)` **including soft-deleted tombstones**; a tombstoned date is never resurrected.
 - **Cap-aware:** if the candidate date is at/past `max_occurrences` by anchor index, and fewer rows exist for the bill than the cap, re-anchor the schedule to the candidate (month-anchored: `start_period`; weekly: `start_date`) and reduce `max_occurrences` by the number of existing rows. If no occurrences remain, create nothing (the bill stays active but capped out).
 
 ## Backend
 
-1. `app/services/recurrence.py`: `seed_next_occurrence(db, template, today) -> PaymentInstance | None` implementing the contract (appends without committing; the caller owns the commit). Reuse `_first_occurrence_on_or_after`, `_bill_active_in_period`, `_due_date_for_period`, `_occurrence_index`/`_cap_reached`, `_step_months`. Bound the month-anchored search (e.g. 2 years or `(60 // interval)` steps).
+1. `app/services/recurrence.py`: `seed_resumed_occurrences(db, template, today) -> list[PaymentInstance]` implementing the contract (appends without committing; the caller owns the commit). Reuse `_raw_occurrences_in_period`/`_occurrences_in_period`, `_next_active_occurrence`, `_reanchor_for_cap`, `_first_active_period_on_or_after`, `_due_date_for_period`. Bound the month-anchored fallback scan.
 2. `app/routers/bills.py`: `POST /bills/{id}/unarchive` (literal path declared with the other `/payments`-style literals or before `/{bill_id}` routes as appropriate), response `BillTemplateOut`. Mutate flags, call the helper, commit once, return the bill.
 3. Tests (new `backend/tests/test_unarchive.py`):
    - unpauses + unarchives and seeds the next occurrence for a monthly bill (paused at creation with a past `due_month`, archived, unarchived → exactly one instance, `due_date >= today`, no gap rows)
