@@ -30,14 +30,12 @@ def register(session: requests.Session) -> None:
         sys.exit(1)
 
 
-def login(session: requests.Session) -> str:
+def login(session: requests.Session) -> None:
     r = session.post(f"{BASE_URL}/auth/login", json={"email": EMAIL, "password": PASSWORD})
     if r.status_code != 200:
         print(f"  Login failed ({r.status_code}): {r.text}")
         sys.exit(1)
-    token = r.json()["access_token"]
-    print("  Logged in, token received")
-    return token
+    print("  Logged in, auth cookies received")
 
 
 def inject_paid_today(data: dict) -> dict:
@@ -89,16 +87,13 @@ def inject_paid_today(data: dict) -> dict:
     return data
 
 
-def has_data(session: requests.Session, token: str) -> bool:
-    r = session.get(
-        f"{BASE_URL}/bills",
-        headers={"Authorization": f"Bearer {token}"},
-    )
+def has_data(session: requests.Session) -> bool:
+    r = session.get(f"{BASE_URL}/bills")
     return r.status_code == 200 and len(r.json()) > 0
 
 
-def restore(session: requests.Session, token: str) -> None:
-    if has_data(session, token):
+def restore(session: requests.Session) -> None:
+    if has_data(session):
         print("  Demo data already present, skipping restore.")
         return
     data = json.loads(DATA_FILE.read_text())
@@ -106,7 +101,6 @@ def restore(session: requests.Session, token: str) -> None:
     payload = json.dumps(data)
     r = session.post(
         f"{BASE_URL}/export/restore",
-        headers={"Authorization": f"Bearer {token}"},
         files={"file": ("seed_data.json", payload, "application/json")},
     )
     if r.status_code != 200:
@@ -131,10 +125,10 @@ def main() -> None:
         register(session)
 
         print("2. Logging in...")
-        token = login(session)
+        login(session)
 
         print("3. Restoring seed data...")
-        restore(session, token)
+        restore(session)
 
     print()
     print("Done. Log in at http://localhost:3010")
