@@ -15,7 +15,7 @@ timeline_budget:
   after_hours_only: true
 ---
 
-# Bill Tracker — Product Requirements Document
+# Hearthbill — Product Requirements Document
 
 ## Vision & Problem Statement
 
@@ -221,7 +221,7 @@ household finance manager does not need to check the dashboard proactively.
 
 ## Business Logic
 
-Bill Tracker automatically derives the status of each payment and creates the next recurring
+Hearthbill automatically derives the status of each payment and creates the next recurring
 instance without user intervention: given a bill's due date and whether it has been marked
 paid, the system classifies the instance as upcoming, overdue, or paid — and when a
 recurring instance is marked paid, the system produces the next period's instance from the
@@ -259,7 +259,7 @@ by the household. Each registrant gets a fully isolated data partition.
 
 ## Non-Goals
 
-- **No budgeting or savings goals.** Bill Tracker tracks bills and payments only; it does
+- **No budgeting or savings goals.** Hearthbill tracks bills and payments only; it does
   not advise on budget allocation, savings targets, or financial planning.
 
 - **No bank or card integrations.** No automatic transaction import of any kind (no open

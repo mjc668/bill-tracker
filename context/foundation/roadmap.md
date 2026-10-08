@@ -1,15 +1,15 @@
 ---
-project: bill-tracker
+project: hearthbill
 version: 1
 status: draft
 created: 2026-06-11
-updated: 2026-09-22
+updated: 2026-10-08
 prd_version: 1
 main_goal: low-complexity
 top_blocker: none
 ---
 
-# Roadmap: Bill Tracker
+# Roadmap: Hearthbill
 
 > Derived from `context/foundation/prd.md` (v1) + auto-researched codebase baseline.
 > Edit-in-place; archive when superseded.
@@ -17,7 +17,7 @@ top_blocker: none
 
 ## Vision recap
 
-Bill Tracker replaces the household spreadsheet with a web app that automates the
+Hearthbill replaces the household spreadsheet with a web app that automates the
 tedious, error-prone parts: each month's payment instance is generated automatically,
 the dashboard shows what's upcoming and overdue at a glance, and family members can
 mark bills paid from any device. Unlike subscription-based tools (YNAB, Mint), it
@@ -139,7 +139,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:**
   - Does `backend/app/services/recurrence.py` already implement FR-006 (idempotent instance generation) and FR-009 (auto-create next period on paid)? — Owner: user. Block: no (planning can proceed; implementation will read the file and complete or extend it).
-- **Risk:** This is the most complex slice — it exercises the two domain rules simultaneously (status classification + recurrence automation). The idempotency key `(bill_id, period)` must be enforced at the DB constraint level to prevent duplicate instances at month boundaries (see AGENTS.md hard rule). Sequenced after template management because instances are derived from templates.
+- **Risk:** This is the most complex slice — it exercises the two domain rules simultaneously (status classification + recurrence automation). The idempotency key `(bill_id, due_date)` (originally `(bill_id, period)`) must be enforced at the DB constraint level to prevent duplicate instances at period boundaries (see AGENTS.md hard rule). Sequenced after template management because instances are derived from templates.
 - **Status:** done
 
 ---
@@ -405,7 +405,7 @@ None open. (Question 1, Local-mode PWA and HTTPS, was resolved 2026-09-22 — se
 
 ## Post-roadmap releases
 
-Shipped after the planned slices completed. Each maps to an archived change folder where one exists.
+Shipped after the planned slices completed. Each maps to an archived change folder where one exists. (These are historical; since v4.0.0 Hearthbill has no versioned releases — images are tagged `sha-<7>` / `main` / `latest` from green `main` commits, and the footer shows the deployed commit.)
 
 | Release | Change | Summary | Archived change |
 |---|---|---|---|
@@ -421,13 +421,22 @@ Shipped after the planned slices completed. Each maps to an archived change fold
 | v2.1.1 | payments-order | Payments list ordered Overdue → Upcoming → Paid instead of by category | — |
 | v2.1.2 | one-off-fix | One-off bills generate their single instance; past-dated one-offs show as overdue | — |
 | v2.2.0 | dashboard-rework | Rolling-window swatches (7 days / 30 days / paid progress) and a bills-vs-payments grouped-bar chart; HTTPS/PWA deployment guide | — |
+| v3.0.0 | rename-and-hardening | Pay Tracker renamed to Bill Tracker (now Hearthbill); cookie-only auth (HttpOnly), JWT issuer/audience change; backend/frontend images split | — |
+| v3.1.0 | unarchive-bills | Unarchiving a bill resumes it from the next due date without backfilling earlier periods | — |
+| v3.1.1 | unarchive-fix | Unarchive seeds the current period, not just future dates | — |
+
+## Current change (in flight)
+
+- **v4.0.0 — hearthbill-sqlite-container**: rename to **Hearthbill** (mascot: wombat); one all-in-one image (Next standalone + uvicorn under supervisord, `/api/*` proxied same-origin); PostgreSQL 17 replaced by **SQLite** at `/data/hearthbill.db` (WAL); PUID/PGID + auto-persisted JWT secret for Unraid; images published per green `main` commit (`sha-<7>`, `main`, `latest`); CI release workflow deleted, version-sync commits removed (footer shows the commit); Unraid Community Applications template prepared but **not submitted** until the maintainer has tested the container; one-off Postgres→SQLite ETL at `backend/scripts/migrate_postgres_to_sqlite.py`. Plan: `context/changes/hearthbill-sqlite-container/plan.md`.
 
 ## Next up
 
 Operational follow-ups (not code slices):
 
-- **Install apprise-go, configure it, and connect it to Bill Tracker.**
-  1. **Install** apprise-go on the host (container or binary). It is CLI-only with no HTTP server, so it needs a small HTTP wrapper for Bill Tracker to call — or run `caronc/apprise` / `lscr.io/linuxserver/apprise-api` as the gateway instead.
+- **Test the Hearthbill container, then submit to the Unraid CA catalogue.** Template `templates/hearthbill.xml` and profile `ca_profile.xml` are prepared; submission is intentionally pending until the maintainer has run the container (register → bill → payment → reminder → backup/restore). Prerequisites: GHCR package public, forum support thread.
+- **Migrate the live Postgres deployment to SQLite.** Run `backend/scripts/migrate_postgres_to_sqlite.py` against the 3.1.x database (source must be at alembic head `b9c0d1e2f3a4`), copy the resulting `hearthbill.db` into `/data`, and restart. Expect one forced sign-in (JWT issuer/audience renamed to `hearthbill*`). See README § Migrating from the Postgres deployment.
+- **Install apprise-go, configure it, and connect it to Hearthbill.**
+  1. **Install** apprise-go on the host (container or binary). It is CLI-only with no HTTP server, so it needs a small HTTP wrapper for Hearthbill to call — or run `caronc/apprise` / `lscr.io/linuxserver/apprise-api` as the gateway instead.
   2. **Configure** the notification targets (Discord / ntfy / Gotify / email, etc.) in the gateway (its config file, storage, or `APPRISE_STATELESS_URLS`).
-  3. **Connect** Bill Tracker: set `APPRISE_BASE_URL` in the backend `.env` (optionally `APPRISE_KEY` for a saved config, `APPRISE_URLS` for per-request targets, `APPRISE_TIMEOUT_SECONDS`), redeploy, then Settings → Notifications → "Send test notification". See `.env.example` and `infrastructure.md` § Notification channels.
+  3. **Connect** Hearthbill: set `APPRISE_BASE_URL` in `.env` (optionally `APPRISE_KEY` for a saved config, `APPRISE_URLS` for per-request targets, `APPRISE_TIMEOUT_SECONDS`), redeploy, then Settings → Notifications → "Send test notification". See `.env.example` and `infrastructure.md` § Notification channels.
   - SMTP is optional legacy: reminders fall back to email only when it is configured; password reset still requires it.

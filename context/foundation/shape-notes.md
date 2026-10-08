@@ -16,7 +16,7 @@ checkpoint:
   quality_check_status: accepted
 ---
 
-# Shape Notes — Bill Tracker
+# Shape Notes — Hearthbill
 
 ## Vision & Problem Statement
 
@@ -29,7 +29,7 @@ The insight: existing tools (YNAB, Mint, similar) are SaaS-heavy, subscription-b
 over-engineered for a simple personal bill tracker that needs to work both online and
 offline without depending on a third-party cloud service.
 
-Bill Tracker is a personal-first web app that replaces the Excel sheet: it tracks recurring
+Hearthbill is a personal-first web app that replaces the Excel sheet: it tracks recurring
 and one-time bills, automates next-month instance creation, and gives a real-time shared
 view to the whole household.
 
@@ -160,7 +160,7 @@ and weekends; user accepted with eyes open.
 
 ## Business Logic
 
-Bill Tracker applies two domain rules that a spreadsheet cannot replicate automatically:
+Hearthbill applies two domain rules that a spreadsheet cannot replicate automatically:
 
 1. **Status classification rule:** Given today's date and a payment instance's due date and
    paid status, the system classifies each instance as `upcoming` (due in the future),
@@ -173,7 +173,7 @@ Bill Tracker applies two domain rules that a spreadsheet cannot replicate automa
    set. The rule inputs are: template's due_day_of_month, recurrence_type, and the
    current instance's period. The output is the next instance record.
 
-These two rules are what distinguish Bill Tracker from a static spreadsheet.
+These two rules are what distinguish Hearthbill from a static spreadsheet.
 
 ## Non-Functional Requirements
 
@@ -186,7 +186,7 @@ These two rules are what distinguish Bill Tracker from a static spreadsheet.
 
 ## Non-Goals
 
-- **No budgeting or savings goals.** Bill Tracker tracks bills and payments; it does not
+- **No budgeting or savings goals.** Hearthbill tracks bills and payments; it does not
   advise on budget allocation, savings targets, or financial planning.
 
 - **No bank or card integrations.** No automatic transaction import (no Plaid, open banking,

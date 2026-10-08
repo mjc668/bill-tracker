@@ -1,8 +1,8 @@
-# Bill Tracker
+# Hearthbill
 
-A self-hosted household bill tracking PWA. Define your recurring bills once, then each period's payment instances are generated automatically. Track what's paid from any device — phone, tablet, or desktop.
+A self-hosted household bill tracking PWA. Define your recurring bills once, then each period's payment instances are generated automatically. Track what's paid from any device — phone, tablet, or desktop. Hearthbill's mascot is a wombat.
 
-No third-party data sharing. No subscription. Runs locally with Docker Compose or in the cloud. Each user's data is fully isolated.
+No third-party data sharing. No subscription. Runs as a single Docker container with all data in one SQLite file — no external database. Each user's data is fully isolated.
 
 
 ## Preview
@@ -19,7 +19,7 @@ No third-party data sharing. No subscription. Runs locally with Docker Compose o
 ## What it does
 
 - **Multiple household users** — register separate accounts for each family member; every account's bills, payments, categories and settings are fully isolated.
-- **Recurring bills** — define a bill once: name, category, amount, currency, recurrence (weekly / every-N weeks, monthly / every-N months, yearly / every-N years, or one-off) with an optional occurrence limit. Bill Tracker generates payment instances automatically each period.
+- **Recurring bills** — define a bill once: name, category, amount, currency, recurrence (weekly / every-N weeks, monthly / every-N months, yearly / every-N years, or one-off) with an optional occurrence limit. Hearthbill generates payment instances automatically each period.
 - **Payment ledger** — mark a payment as paid with partial amounts, an actual payment date, and a note; over/underpayments are visible against the expected amount, and reverting a payment removes it.
 - **Archive, unarchive, never delete** — archiving a template hides it from active views while preserving its payment history; unarchiving resumes it like an active bill (the current period's payments are generated, past-due included) without backfilling earlier periods.
 - **Dashboard** — rolling windows with overdue aging, bills-vs-payments chart, upcoming forecast, and category breakdown.
@@ -35,23 +35,22 @@ No third-party data sharing. No subscription. Runs locally with Docker Compose o
 
 ## Quick start without cloning
 
-Pull the published images from GitHub Container Registry and run the app with just two files — no repo clone required.
+Pull the published image from GitHub Container Registry and run the app with just two files — no repo clone required.
 
 ```bash
-mkdir bill-tracker && cd bill-tracker
-curl -O https://raw.githubusercontent.com/mjc668/bill-tracker/main/docker-compose.prod.yml
-curl -O https://raw.githubusercontent.com/mjc668/bill-tracker/main/.env.example
+mkdir hearthbill && cd hearthbill
+curl -O https://raw.githubusercontent.com/mjc668/hearthbill/main/docker-compose.prod.yml
+curl -O https://raw.githubusercontent.com/mjc668/hearthbill/main/.env.example
 cp .env.example .env
-```
-
-Edit `.env` and set a strong `POSTGRES_PASSWORD` and `JWT_SECRET` — the stack refuses to start while either is empty (generate each with `openssl rand -hex 24`). `BILL_TRACKER_VERSION` is pre-set to the current release; change it if you want a different one, then:
-
-```bash
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-- Frontend: http://localhost:3010
-- API docs: http://localhost:8010/docs
+- App (UI + API): http://localhost:3010
+- API docs: http://localhost:3010/api/docs (development only)
+
+`JWT_SECRET` may be left empty: a strong secret is generated on first start and persisted at `/data/jwt_secret`, so sessions survive restarts. Set it explicitly only to keep an existing secret (e.g. after migrating). For a public deployment, set `ENVIRONMENT=production` and put TLS in front (see [Deployment](context/foundation/infrastructure.md#https--pwa-deployment)).
+
+The compose file defaults to `HEARTHBILL_TAG=latest` (rolling builds from green `main` commits). To pin a specific build, set `HEARTHBILL_TAG=sha-<7>` in `.env` — the current commit is shown in the app footer.
 
 To try it with pre-seeded demo data instead of starting empty:
 
@@ -59,12 +58,12 @@ To try it with pre-seeded demo data instead of starting empty:
 docker compose -f docker-compose.prod.yml --profile demo up -d
 ```
 
-`BILL_TRACKER_VERSION` is required — there is no implicit `:latest`. Set it in `.env` or per-command (e.g. `BILL_TRACKER_VERSION=3.1.0 docker compose -f docker-compose.prod.yml up -d`).
+Demo login: `demo@demo.com` / `demo1234`.
 
 
 ## Getting started
 
-The steps below build the images from source — use this if you're developing Bill Tracker or want to run unreleased changes. If you just want to run the app, see [Quick start without cloning](#quick-start-without-cloning) above.
+The steps below build the image from source — use this if you're developing Hearthbill or want to run unreleased changes. If you just want to run the app, see [Quick start without cloning](#quick-start-without-cloning) above.
 
 ### 1. Set up environment
 
@@ -72,7 +71,7 @@ The steps below build the images from source — use this if you're developing B
 cp .env.example .env
 ```
 
-Edit `.env` and set a strong `POSTGRES_PASSWORD` and `JWT_SECRET` (generate each with `openssl rand -hex 24`). Everything else works with the defaults for local use.
+Everything works with the defaults for local use. For a public deployment set a `JWT_SECRET`, `ENVIRONMENT=production`, `COOKIE_SECURE=true`, and `APP_BASE_URL` to your public URL.
 
 ### 2. Start the app
 
@@ -80,8 +79,8 @@ Edit `.env` and set a strong `POSTGRES_PASSWORD` and `JWT_SECRET` (generate each
 docker compose up --build
 ```
 
-- Frontend: http://localhost:3010
-- API docs: http://localhost:8010/docs
+- App: http://localhost:3010
+- API docs: http://localhost:3010/api/docs (development only)
 
 ### 3. Create your account
 
@@ -89,7 +88,7 @@ Open http://localhost:3010 and register. Each account is isolated — register s
 
 ### 4. Add your first bill
 
-Go to **Bills → New Bill**. Fill in the name, category, amount, recurrence, and due date. Save it — Bill Tracker will generate this period's payment instance automatically.
+Go to **Bills → New Bill**. Fill in the name, category, amount, recurrence, and due date. Save it — Hearthbill will generate this period's payment instance automatically.
 
 ### 5. Track payments
 
@@ -101,18 +100,24 @@ The recommended channel is an [Apprise](https://github.com/caronc/apprise) API g
 
 SMTP is an optional legacy fallback and is still required for password reset. Add the `SMTP_*` values to `.env` and restart to enable it.
 
-The settings page also shows the current server time (UTC) so you can set send times relative to your timezone.
+The settings page also shows the current server time so you can set send times relative to your timezone; the scheduler honors the container's `TZ`.
 
 
 ## Environment variables
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `POSTGRES_PASSWORD` | yes | PostgreSQL password — generate with `openssl rand -hex 24`; an empty value aborts the stack |
-| `JWT_SECRET` | yes | JWT signing secret — use a long random string |
-| `BILL_TRACKER_VERSION` | yes (prod compose) | Released image tag to run, e.g. `3.1.0` — there is no implicit `:latest` |
-| `DATABASE_URL` | yes | PostgreSQL connection string |
-| `NEXT_PUBLIC_API_URL` | yes | Backend URL as seen by the browser |
+| `HEARTHBILL_TAG` | no (prod compose) | Image tag to run: `latest` (default, rolling) or a pinned `sha-<7>` build |
+| `JWT_SECRET` | no | JWT signing secret. Leave empty to auto-generate and persist at `/data/jwt_secret`; set it to keep an existing secret |
+| `ENVIRONMENT` | no | `development` (default) or `production` — production disables API docs and rejects a weak/default JWT secret |
+| `COOKIE_SECURE` | no | Set `true` when serving over HTTPS; over plain HTTP browsers reject Secure cookies and login bounces |
+| `TRUST_PROXY` | no | Set `true` behind a reverse proxy so rate limiting uses the real client IP from `X-Forwarded-For` (default `true`) |
+| `APP_BASE_URL` | no | Public URL of the app, used in password-reset links (default `http://localhost:3010`) |
+| `DATABASE_URL` | no | Optional override; defaults to `sqlite:////data/hearthbill.db` |
+| `TZ` | no | Time zone for the scheduler and logs, e.g. `Europe/Warsaw` (`Etc/UTC` default) |
+| `PUID` / `PGID` | no | Unraid/root starts only: file owner for `/data` (CA template uses 99/100; compose runs as 10001) |
+| `NEXT_PUBLIC_APP_VERSION` | no | Build-time version label shown in the footer (CI bakes `sha-<7>`; local default `dev`) |
+| `NEXT_PUBLIC_SESSION_HEARTBEAT_SECONDS` | no | Seconds between proactive session-expiry checks on an idle tab (default 180) |
 | `APPRISE_BASE_URL` | no | Apprise API gateway base URL (recommended notification channel) |
 | `APPRISE_KEY` | no | Stateful config key inside the Apprise gateway |
 | `APPRISE_URLS` | no | Stateless Apprise targets passed per request, e.g. `ntfy://topic discord://webhook_id/webhook_token` |
@@ -121,10 +126,12 @@ The settings page also shows the current server time (UTC) so you can set send t
 | `SMTP_PORT` | no | SMTP port (default: 587) |
 | `SMTP_USER` | no | SMTP login |
 | `SMTP_PASSWORD` | no | SMTP password |
+| `SMTP_USE_TLS` | no | Use STARTTLS for SMTP (default: true) |
 | `REMINDER_FROM` | no | From address for reminder emails |
-| `APP_BASE_URL` | no | Public URL of the frontend — used in password reset links (default: `http://localhost:3010`) |
-| `PASSWORD_RESET_TOKEN_EXPIRE_MINUTES` | no | How long a reset token is valid in minutes (default: 60; set to 0 for no expiry) |
-| `RESTORE_SNAPSHOT_RETENTION_DAYS` | no | Days a pre-restore snapshot stays recoverable before the cleanup job deletes it (default: 7) |
+| `EMAIL_BLOCKED_DOMAINS` | no | JSON array of domains silently skipped by the notification scheduler |
+| `PASSWORD_RESET_TOKEN_EXPIRE_MINUTES` | no | How long a reset token is valid in minutes (default: 60; 0 disables expiry) |
+| `RESTORE_SNAPSHOT_RETENTION_DAYS` | no | Days a pre-restore snapshot stays recoverable before cleanup (default: 7) |
+| `BACKUP_KEEP` | no | Pre-migration database snapshots kept in `/data/backups` (default: 10) |
 
 Copy `.env.example` to `.env`. Never commit `.env`.
 
@@ -133,97 +140,115 @@ Copy `.env.example` to `.env`. Never commit `.env`.
 
 - **Frontend:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, next-intl
 - **Backend:** FastAPI, Python 3.13, SQLAlchemy 2.0, Alembic, Pydantic v2
-- **Database:** PostgreSQL 17 as a separate `postgres` service with a named volume
-- **Runtime:** Docker Compose
+- **Database:** SQLite (WAL) at `/data/hearthbill.db` — no database server
+- **Runtime:** one all-in-one Docker image (Next standalone + uvicorn under supervisord), one port `3010`, one volume `/data`
 
 
 ## Development commands
 
 ```bash
-# Start everything
+# Start the whole stack (one container, UI + API on 3010)
 docker compose up --build
 
-# Wipe DB and start clean
+# Start with demo data (demo@demo.com / demo1234)
+docker compose --profile demo up --build
+
+# Wipe the SQLite volume and start clean
 docker compose down -v && docker compose up --build
 
-# Frontend only (against a running backend)
-cd frontend && npm run dev
+# Frontend only (Next dev server on 3000; /api rewrites to 127.0.0.1:8010).
+# API_PREFIX=/api makes the browser-side client call /api/* so the rewrite applies.
+cd frontend && API_PREFIX=/api npm run dev
 
-# Backend only
+# Backend only (uvicorn on 8010)
 cd backend && uv run uvicorn app.main:app --reload
 
-# Lint
-cd frontend && npm run lint
+# Lint / build
+cd frontend && npm run lint && npm run build
 
 # Backend format check, types, tests
 cd backend && uv run black --check --target-version py313 .
 cd backend && uv run mypy app
-cd backend && uv run pytest tests/ -v
+cd backend && uv run pytest
 
 # New DB migration after changing a model
-docker compose exec backend uv run alembic revision --autogenerate -m "describe the change"
+cd backend && uv run alembic revision --autogenerate -m "describe the change"
+# ...then hand-review the file and apply:
+cd backend && uv run alembic upgrade head
 ```
 
-> **Migration note:** Always read the generated migration file before applying — autogenerate can miss new columns. For renames, write `add_column` + `UPDATE` + `drop_column` manually instead of relying on `alter_column(new_column_name=...)`.
-
-
-## Deployment
-
-The production compose file binds the frontend and backend to localhost only; put a TLS-terminating reverse proxy (Caddy, nginx + Certbot, or Cloudflare) in front. PostgreSQL runs as its own `postgres` service with a named volume — the database is not co-located in the backend container.
-
-Full guides for Caddy, nginx + Certbot, and Cloudflare — including HTTPS/PWA requirements — are in [`context/foundation/infrastructure.md`](context/foundation/infrastructure.md#https--pwa-deployment).
+> **Migration note:** Always read the generated migration file before applying — autogenerate can miss new columns. For renames, write `add_column` + `UPDATE` + `drop_column` manually instead of relying on `alter_column(new_column_name=...)`. SQLite migrations run with `render_as_batch=True`; the container applies `alembic upgrade head` automatically on start, after snapshotting the database into `/data/backups`.
 
 
 ## Updating
 
-Set `BILL_TRACKER_VERSION` in `.env` to the release you want, then pull and recreate:
+Images are published from every green `main` commit. `latest` and `main` roll forward; `sha-<7>` tags are immutable. Set `HEARTHBILL_TAG` in `.env` to pin a build (recommended for stability), then pull and recreate:
 
 ```bash
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-Database migrations run automatically when the backend starts. The running version is shown at the bottom-right of the app.
+The deployed commit is shown in the footer (bottom-right). Database migrations run automatically on start; the entrypoint first writes a pre-migration snapshot to `/data/backups/pre-upgrade-<timestamp>.db` (keeps `BACKUP_KEEP`, default 10).
 
-**Bill Tracker renamed its images in 3.0.0.** Images moved from `ghcr.io/mjc668/pay-tracker-*` to `ghcr.io/mjc668/bill-tracker-*`, and `PAY_TRACKER_VERSION` became `BILL_TRACKER_VERSION`. The old image names are frozen at 2.6.0, so any tooling that tracks the image a container was created with — the Unraid Docker tab, Compose Manager, update notifiers like Diun — will stop reporting updates until the reference is changed:
+**Rollback:** set `HEARTHBILL_TAG` to a previous `sha-<7>` tag and recreate. If the newer build had already run a migration, restore the matching pre-upgrade `.db` from `/data/backups` before starting the old image.
 
-- **Docker Compose on the host:** re-download `docker-compose.prod.yml` (or copy the new `image:` lines), rename the env var to `BILL_TRACKER_VERSION=3.1.0`, then `pull` + `up -d`.
-- **Unraid Docker tab:** edit each container → change **Repository** to `ghcr.io/mjc668/bill-tracker-backend` / `ghcr.io/mjc668/bill-tracker-frontend` (tag `3.1.0` or `latest`), Apply, then pull. Unraid's "update available" check only looks at that repository field.
-- **Unraid Compose Manager (or any compose stack):** update the stack's compose/env files the same way, then `docker compose pull && docker compose up -d`.
+Unraid users can use the Docker tab's force-update instead (the template tracks `ghcr.io/mjc668/hearthbill`).
 
-Upgrading from 2.x also logs everyone out once (the JWT issuer/audience changed in 3.0.0) — that is expected; sign in again afterwards.
+
+## Migrating from the Postgres deployment (3.1.x)
+
+Hearthbill replaces the old PostgreSQL-backed deployment with a single SQLite file. A one-off ETL copies all data (original IDs preserved) and verifies row counts and money totals. The source Postgres must be at alembic revision `b9c0d1e2f3a4` (the 3.1.x head) — run the old stack once so migrations finish, if needed.
+
+```bash
+cd backend
+uv run python scripts/migrate_postgres_to_sqlite.py \
+  --source postgresql://user:pass@host:5432/paytracker \
+  --target ./hearthbill.db
+```
+
+The script refuses a non-empty target, so delete `hearthbill.db` and re-run if a previous attempt failed. Copy the finished file into the container's `/data` volume before first start (e.g. `/mnt/user/appdata/hearthbill/hearthbill.db` on Unraid), then start Hearthbill. Keep the source database until you have verified the new deployment.
+
+**Sign in once after migrating:** the JWT issuer/audience were renamed to `hearthbill*`, so existing sessions are invalidated. All other data carries over. You may set `JWT_SECRET` to the old value to keep a stable secret for the future.
+
+
+## Backups
+
+- **Host-side snapshot** — `infra/backup.sh` takes a WAL-safe SQLite snapshot via the SQLite backup API inside the running container, streams it to the host as `backups/hearthbill-<timestamp>.db.gz`, and prunes files older than `BACKUP_KEEP_DAYS` (default 30). Never copy `/data/hearthbill.db` while the app is running.
+- **Pre-migration snapshots** — taken automatically on every container start before `alembic upgrade head`, stored in `/data/backups`, newest `BACKUP_KEEP` kept.
+- **XLSX** — Payments page → Export Excel. One sheet per month, all columns.
+- **JSON backup** — Settings → Download Backup. Full data export scoped to your account.
+- **Restore** — Settings → Restore from Backup. Shows a comparison of your current data vs. the backup before you confirm, then atomically replaces your data. Every restore snapshots your prior data server-side first, so a mistaken restore can be reverted (kept for `RESTORE_SNAPSHOT_RETENTION_DAYS`, default 7).
+
+
+## Unraid / Community Applications
+
+An Unraid Community Applications template is prepared in this repo (`templates/hearthbill.xml`, with the CA profile at `ca_profile.xml`) but is **not yet submitted to the CA catalogue** — the maintainer wants the container tested first. It will be submitted once that is done; this README will be updated when it is listed.
+
+The prepared template configures:
+
+- Repository `ghcr.io/mjc668/hearthbill:latest` (or pin a `sha-<7>` tag)
+- Port `3010`
+- `/data` → `/mnt/user/appdata/hearthbill`
+- PUID `99` / PGID `100`, plus `TZ`
+- `ENVIRONMENT=production`, `COOKIE_SECURE`, `APP_BASE_URL`, `TRUST_PROXY=true`
+
+HTTPS via [SWAG](https://docs.linuxserver.io/general/swag/) (or another reverse proxy) is recommended: PWA installation and secure cookies need it.
+
+Once listed, installation is: **Apps → search "Hearthbill"** → fill in port, paths, PUID/PGID and TZ → Install. Docker Hub alternatives or manual `docker run` are not the supported path — use the GHCR image above.
 
 
 ## Installing as a PWA
 
-- **Chrome / Brave (desktop):** install icon (⊕) in the address bar, or browser menu → Install Bill Tracker
+- **Chrome / Brave (desktop):** install icon (⊕) in the address bar, or browser menu → Install Hearthbill
 - **Android:** browser menu (⋮) → Add to Home screen
 - **iOS Safari:** Share (⎋) → Add to Home Screen
 
 Requires HTTPS in production. Localhost works as an exception in most browsers.
 
 
-## Export & backup
-
-- **XLSX** — Payments page → Export Excel. One sheet per month, all columns.
-- **JSON backup** — Settings → Download Backup. Full data export scoped to your account.
-- **Restore** — Settings → Restore from Backup. Shows a comparison of your current data vs. the backup (bill/payment counts, export date) before you confirm, then atomically replaces your data. Accepts `schema_version` 2–6.
-- **Undo a restore** — every restore automatically snapshots your prior data server-side first (skipped if you had no existing bills). If a restore turns out to be a mistake, Settings → Restore shows a "Restore This Snapshot" option with the snapshot's timestamp, letting you revert. Snapshots are kept for `RESTORE_SNAPSHOT_RETENTION_DAYS` (default 7) and only the single most recent one is retained per account.
-
-
-## Upgrading from Pay Tracker 2.x
-
-Bill Tracker is the renamed and extended continuation of Pay Tracker. When upgrading from Pay Tracker 2.x:
-
-- Image and package names changed: `pay-tracker-*` → `bill-tracker-*`. Use the new `ghcr.io/mjc668/bill-tracker-*` images.
-- `PAY_TRACKER_VERSION` is now `BILL_TRACKER_VERSION` in `.env`.
-- The JWT issuer/audience changed, so all existing sessions are invalidated — every user has to log in again. The session-expiry flow handles this gracefully.
-- `POST /auth/login` and `POST /auth/register` no longer return the token in the response body; the JWT is delivered as an HttpOnly cookie only.
-- The database schema and the `postgres` data volume are unchanged — existing data carries over.
-
-
 ## Credits
 
-Bill Tracker is a rework and extension of **Pay Tracker** by Mariusz Winiarz — https://github.com/marwin87/pay-tracker — released under the MIT License. Thanks for the original concept and implementation.
+Hearthbill is a fork, rework and extension of **Pay Tracker** by Mariusz Winiarz — https://github.com/marwin87/pay-tracker — released under the MIT License. Thanks for the original concept and implementation. The Hearthbill rebrand and single-container/SQLite rearchitecture are by Michael Carlile.
 
 This project adds the payment ledger, editable categories, generalized recurrence, dashboard/statistics, Apprise notifications, and other changes. The upstream MIT notice and the modifications notice are preserved in [LICENSE](LICENSE). If you use this software in a public-facing application, a clear link or attribution back to the original project is appreciated.
