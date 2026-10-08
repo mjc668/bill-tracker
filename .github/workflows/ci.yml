@@ -5,10 +5,15 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
-# Read-only: every job only needs the checked-out source and public images.
+# Read-only by default; only the publish jobs request packages: write.
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   frontend:
@@ -98,25 +103,138 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Create .env from example
-        run: |
-          cp .env.example .env
-          # Throwaway credentials for this disposable CI stack only.
-          sed -i 's|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=ci-postgres-password|' .env
-          sed -i 's|^JWT_SECRET=.*|JWT_SECRET=ci-jwt-secret-not-for-production|' .env
+        run: cp .env.example .env
 
       - name: Build Docker Compose services
         run: docker compose --profile demo build
 
       - name: Start stack
-        run: docker compose up -d --wait --timeout 120 postgres backend frontend demo-data
+        run: docker compose up -d --wait --timeout 180 app demo-data
 
       - name: Run e2e tests
         working-directory: frontend
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:3010
-          E2E_API_URL: http://localhost:8010
+          E2E_API_URL: http://localhost:3010/api
         run: npx playwright test --reporter=line
 
       - name: Cleanup
         if: always()
         run: docker compose down -v
+
+  publish:
+    name: Publish image (${{ matrix.platform }})
+    # Every green main commit becomes an immutable sha-<7> tag plus the
+    # rolling main/latest pointers; there are no GitHub Releases.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs:
+      - frontend
+      - backend
+      - docker-e2e
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Resolve short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
+      - name: Prepare platform pair
+        run: echo "PLATFORM_PAIR=${PLATFORM//\//-}" >> "$GITHUB_ENV"
+        env:
+          PLATFORM: ${{ matrix.platform }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          build-args: |
+            NEXT_PUBLIC_APP_VERSION=sha-${{ env.SHORT_SHA }}
+          outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/hearthbill,push-by-digest=true,name-canonical=true,push=true
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=builder-${{ env.PLATFORM_PAIR }}
+          cache-to: type=gha,mode=max,scope=builder-${{ env.PLATFORM_PAIR }}
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256/}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish-merge:
+    name: Publish — merge multi-arch manifest
+    needs: [publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Resolve short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          # shellcheck disable=SC2046  # word splitting is intended here
+          docker buildx imagetools create \
+            -t ghcr.io/${{ github.repository_owner }}/hearthbill:sha-${{ env.SHORT_SHA }} \
+            -t ghcr.io/${{ github.repository_owner }}/hearthbill:main \
+            -t ghcr.io/${{ github.repository_owner }}/hearthbill:latest \
+            $(printf 'ghcr.io/${{ github.repository_owner }}/hearthbill@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ghcr.io/${{ github.repository_owner }}/hearthbill:sha-${{ env.SHORT_SHA }}

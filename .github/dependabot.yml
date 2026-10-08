@@ -1,4 +1,4 @@
-# Dependabot updates for bill-tracker.
+# Dependabot updates for hearthbill.
 version: 2
 
 updates:
@@ -21,3 +21,9 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
