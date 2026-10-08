@@ -8,10 +8,12 @@ loaded for the bounded attention list.
 
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import Any
 
-from sqlalchemy import and_, case, func, or_
+from sqlalchemy import and_, case, func, or_, type_coerce
 from sqlalchemy.orm import Session
 
+from app.core.types import Money
 from app.models.bill import (
     BillTemplate,
     PaymentInstance,
@@ -72,10 +74,28 @@ def _primary_currency(db: Session, user_id: int) -> tuple[str, list[str]]:
     return primary, others
 
 
+def _positive(value: Any) -> Any:
+    """GREATEST(value, 0) replacement that also works on SQLite."""
+    return case((value > 0, value), else_=0)
+
+
+def _remaining_amount() -> Any:
+    """Money-typed remaining balance (amount - paid).
+
+    Arithmetic between a TypeDecorator and a literal loses the decorator
+    (SQLAlchemy delegates binary ops to the impl), so without this coercion
+    aggregates would return raw cents instead of Decimal.
+    """
+    return type_coerce(
+        PaymentInstance.amount - func.coalesce(PaymentInstance.paid_amount, 0),
+        Money,
+    )
+
+
 def _summary(
     db: Session, user_id: int, currency: str, month: str, today: date
 ) -> StatsSummary:
-    remaining = PaymentInstance.amount - func.coalesce(PaymentInstance.paid_amount, 0)
+    remaining = _remaining_amount()
     effective_overdue = or_(
         PaymentInstance.status == PaymentStatus.overdue,
         and_(
@@ -92,7 +112,7 @@ def _summary(
         db.query(
             func.coalesce(func.sum(PaymentInstance.amount), 0),
             func.coalesce(func.sum(func.coalesce(PaymentInstance.paid_amount, 0)), 0),
-            func.coalesce(func.sum(func.greatest(remaining, 0)), 0),
+            func.coalesce(func.sum(_positive(remaining)), 0),
             func.count(PaymentInstance.id),
             func.count(case((PaymentInstance.status == PaymentStatus.paid, 1))),
             func.count(case((effective_upcoming, 1))),
@@ -125,7 +145,7 @@ def _summary(
 def _trend(
     db: Session, user_id: int, currency: str, periods: list[str]
 ) -> list[TrendPoint]:
-    paid_period = func.to_char(Payment.paid_on, "YYYY-MM")
+    paid_period = func.strftime("%Y-%m", Payment.paid_on)
     paid_rows = (
         db.query(paid_period, func.coalesce(func.sum(Payment.amount), 0))
         .select_from(Payment)
@@ -212,7 +232,7 @@ def _by_category(
     periods: list[str],
     language: str | None,
 ) -> list[CategoryStat]:
-    paid_period = func.to_char(Payment.paid_on, "YYYY-MM")
+    paid_period = func.strftime("%Y-%m", Payment.paid_on)
     paid_rows = (
         db.query(BillTemplate.category_id, func.coalesce(func.sum(Payment.amount), 0))
         .select_from(Payment)
@@ -329,11 +349,11 @@ def _upcoming_window(
     Rolling from today (not calendar months); partial payments count with
     their remaining balance. Overdue instances are excluded.
     """
-    remaining = PaymentInstance.amount - func.coalesce(PaymentInstance.paid_amount, 0)
+    remaining = _remaining_amount()
     row = (
         db.query(
             func.count(PaymentInstance.id),
-            func.coalesce(func.sum(func.greatest(remaining, 0)), 0),
+            func.coalesce(func.sum(_positive(remaining)), 0),
         )
         .select_from(PaymentInstance)
         .join(BillTemplate, PaymentInstance.bill_id == BillTemplate.id)
@@ -392,11 +412,11 @@ def _overdue_summary(
     Matches the payments list's Overdue section (which carries rows over from
     earlier periods), so the dashboard swatch and the list agree.
     """
-    remaining = PaymentInstance.amount - func.coalesce(PaymentInstance.paid_amount, 0)
+    remaining = _remaining_amount()
     row = (
         db.query(
             func.count(PaymentInstance.id),
-            func.coalesce(func.sum(func.greatest(remaining, 0)), 0),
+            func.coalesce(func.sum(_positive(remaining)), 0),
         )
         .select_from(PaymentInstance)
         .join(BillTemplate, PaymentInstance.bill_id == BillTemplate.id)

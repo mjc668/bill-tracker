@@ -1,6 +1,7 @@
 # Dependencies
 frontend/node_modules/
 backend/.venv/
+.venv/
 
 # Build output
 frontend/.next/
@@ -14,12 +15,18 @@ backups/
 *.sql
 *.sql.gz
 *.dump
+*.db
+*.db-wal
+*.db-shm
+*.db.gz
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
 backend/.ruff_cache/
+backend/.mypy_cache/
+backend/.pytest_cache/
 backend/.coverage
 backend/htmlcov/
 

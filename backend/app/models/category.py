@@ -3,10 +3,11 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Boolean, ForeignKey, String, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.core.types import UTCDateTime
 
 if TYPE_CHECKING:
     from app.models.bill import BillTemplate
@@ -36,10 +37,10 @@ class Category(Base):
     key: Mapped[str | None] = mapped_column(String(50))
     name: Mapped[str | None] = mapped_column(String(100))
     is_archived: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, server_default="false"
+        Boolean, nullable=False, default=False, server_default=text("0")
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        UTCDateTime, default=lambda: datetime.now(timezone.utc)
     )
 
     user: Mapped[User] = relationship(back_populates="categories")

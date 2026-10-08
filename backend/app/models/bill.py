@@ -8,17 +8,17 @@ from typing import TYPE_CHECKING
 from sqlalchemy import (
     Boolean,
     Date,
-    DateTime,
     ForeignKey,
     Integer,
-    Numeric,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.core.types import Money, UTCDateTime
 
 if TYPE_CHECKING:
     from app.models.category import Category
@@ -51,13 +51,13 @@ class BillTemplate(Base):
     )
     frequency: Mapped[BillFrequency] = mapped_column(String(20), nullable=False)
     interval_count: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=1, server_default="1"
+        Integer, nullable=False, default=1, server_default=text("1")
     )  # repeat every N units (weeks/months/years)
     # Optional total number of occurrences (1-999), counted from the anchor.
     # NULL means unlimited. Forced NULL for one_off bills.
     max_occurrences: Mapped[int | None] = mapped_column(Integer)
     start_date: Mapped[date | None] = mapped_column(Date)  # weekly anchor
-    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Money, nullable=False)
     currency: Mapped[str] = mapped_column(String(10), nullable=False, default="PLN")
     due_day: Mapped[int | None] = mapped_column(
         Integer
@@ -71,7 +71,7 @@ class BillTemplate(Base):
     start_period: Mapped[str | None] = mapped_column(String(7))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        UTCDateTime, default=lambda: datetime.now(timezone.utc)
     )
 
     user: Mapped[User] = relationship(back_populates="bills")
@@ -97,33 +97,33 @@ class PaymentInstance(Base):
     )
     period: Mapped[str] = mapped_column(String(7), nullable=False)  # "YYYY-MM"
     due_date: Mapped[date] = mapped_column(Date, nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Money, nullable=False)
     status: Mapped[PaymentStatus] = mapped_column(
         String(10), nullable=False, default=PaymentStatus.upcoming
     )
-    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    paid_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    paid_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    paid_amount: Mapped[Decimal | None] = mapped_column(Money)
     notes: Mapped[str | None] = mapped_column(Text)
     is_deleted: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, server_default="false"
+        Boolean, nullable=False, default=False, server_default=text("0")
     )
     reminder_sent_upcoming: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, server_default="false"
+        Boolean, nullable=False, default=False, server_default=text("0")
     )
     reminder_sent_overdue: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, server_default="false"
+        Boolean, nullable=False, default=False, server_default=text("0")
     )
     reminder_sent_2_days_before: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, server_default="false"
+        Boolean, nullable=False, default=False, server_default=text("0")
     )
     reminder_sent_on_day: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, server_default="false"
+        Boolean, nullable=False, default=False, server_default=text("0")
     )
     email_sent_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, default=None
+        UTCDateTime, nullable=True, default=None
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        UTCDateTime, default=lambda: datetime.now(timezone.utc)
     )
 
     template: Mapped["BillTemplate"] = relationship(back_populates="instances")

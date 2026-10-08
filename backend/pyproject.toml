@@ -1,7 +1,7 @@
 [project]
-name = "bill-tracker-backend"
-version = "3.1.1"
-description = "Bill Tracker backend — FastAPI + SQLAlchemy + Alembic"
+name = "hearthbill-backend"
+version = "0.0.0"
+description = "Hearthbill backend — FastAPI + SQLAlchemy + Alembic"
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.18.4",
@@ -10,7 +10,6 @@ dependencies = [
     "openpyxl>=3.1.5",
     "pandas>=3.0.3",
     "bcrypt>=4.3.0",
-    "psycopg2-binary>=2.9.12",
     "pydantic[email]>=2.13.4",
     "pydantic-settings>=2.14.2",
     "python-jose[cryptography]>=3.5.0",
@@ -32,7 +31,6 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=6.0",
     "httpx>=0.28",
-    "testcontainers[postgresql]>=4.0",
 ]
 
 [tool.pytest.ini_options]
