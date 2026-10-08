@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bill Tracker",
+  title: "Hearthbill",
   description: "Household bill tracking made simple",
   themeColor: "#2563eb",
 };

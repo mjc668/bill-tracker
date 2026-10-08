@@ -6,8 +6,8 @@ from jose import jwt
 
 from app.core.config import settings
 
-_JWT_ISSUER = "bill-tracker-backend"
-_JWT_AUDIENCE = "bill-tracker"
+_JWT_ISSUER = "hearthbill-backend"
+_JWT_AUDIENCE = "hearthbill"
 
 _COMMON_PASSWORDS: frozenset[str] = frozenset(
     {

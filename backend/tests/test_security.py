@@ -288,8 +288,8 @@ def test_jwt_contains_security_claims(client):
     assert r.status_code == 201
     assert "access_token" not in r.json()
     payload = decode_token(r.cookies["access_token"])
-    assert payload["iss"] == "bill-tracker-backend"
-    assert payload["aud"] == "bill-tracker"
+    assert payload["iss"] == "hearthbill-backend"
+    assert payload["aud"] == "hearthbill"
     assert payload["iat"]
     assert payload["exp"]
     assert payload["jti"]

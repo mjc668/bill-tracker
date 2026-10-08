@@ -187,7 +187,7 @@ def test_monthly_summary_sends_html_email(mock_smtp_cls):
 
     smtp_instance.send_message.assert_called_once()
     msg = smtp_instance.send_message.call_args[0][0]
-    assert msg["Subject"] == "Monthly summary for June 2026 — Bill Tracker"
+    assert msg["Subject"] == "Monthly summary for June 2026 — Hearthbill"
     # EmailMessage with add_alternative is multipart
     assert msg.is_multipart()
     html_part = next(
@@ -262,9 +262,9 @@ def test_monthly_summary_escapes_user_controlled_currency(mock_smtp_cls):
 @pytest.mark.parametrize(
     "language,expected_subject",
     [
-        ("en", "Monthly summary for June 2026 — Bill Tracker"),
-        ("pl", "Miesięczne podsumowanie za June 2026 — Bill Tracker"),
-        ("de", "Monatliche Zusammenfassung für June 2026 — Bill Tracker"),
+        ("en", "Monthly summary for June 2026 — Hearthbill"),
+        ("pl", "Miesięczne podsumowanie za June 2026 — Hearthbill"),
+        ("de", "Monatliche Zusammenfassung für June 2026 — Hearthbill"),
     ],
 )
 @patch("app.services.email.smtplib.SMTP")
@@ -298,7 +298,7 @@ def test_monthly_summary_unknown_language_falls_back_to_english(mock_smtp_cls):
     )
 
     msg = smtp_instance.send_message.call_args[0][0]
-    assert msg["Subject"] == "Monthly summary for June 2026 — Bill Tracker"
+    assert msg["Subject"] == "Monthly summary for June 2026 — Hearthbill"
 
 
 # ---------------------------------------------------------------------------
@@ -349,9 +349,9 @@ def test_reset_email_no_login_when_smtp_user_is_none(mock_smtp_cls):
 @pytest.mark.parametrize(
     "language,expected_subject",
     [
-        ("en", "Reset your Bill Tracker password"),
-        ("pl", "Zresetuj hasło Bill Tracker"),
-        ("de", "Bill Tracker Passwort zurücksetzen"),
+        ("en", "Reset your Hearthbill password"),
+        ("pl", "Zresetuj hasło Hearthbill"),
+        ("de", "Hearthbill Passwort zurücksetzen"),
     ],
 )
 @patch("app.services.email.smtplib.SMTP")
@@ -389,4 +389,4 @@ def test_reset_email_unknown_language_falls_back_to_english(mock_smtp_cls):
     send_password_reset_email(**{**_RESET_BASE, "language": "xx"})
 
     msg = smtp_instance.send_message.call_args[0][0]
-    assert msg["Subject"] == "Reset your Bill Tracker password"
+    assert msg["Subject"] == "Reset your Hearthbill password"

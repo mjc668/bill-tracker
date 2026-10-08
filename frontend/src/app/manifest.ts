@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Bill Tracker",
-    short_name: "Bill Tracker",
+    name: "Hearthbill",
+    short_name: "Hearthbill",
     description: "Household bill tracking made simple",
     start_url: "/",
     display: "standalone",

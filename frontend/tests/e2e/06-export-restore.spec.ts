@@ -28,7 +28,7 @@ test('restore from backup preserves bill count', async ({ page }) => {
   expect(billCountBefore).toBeGreaterThan(0);
 
   // Save backup to a temp file so the file chooser can pick it up
-  const tmpFile = path.join(os.tmpdir(), `bill-tracker-backup-${Date.now()}.json`);
+  const tmpFile = path.join(os.tmpdir(), `hearthbill-backup-${Date.now()}.json`);
   fs.writeFileSync(tmpFile, JSON.stringify(backup));
 
   // Step: navigate to settings where RestoreButton lives
@@ -83,7 +83,7 @@ test('restoring a backup with fewer bills/payments than current shows the stale-
   const staleBackup = await staleExportRes.json();
   expect(staleBackup.bill_templates.length).toBe(1);
 
-  const tmpFile = path.join(os.tmpdir(), `bill-tracker-backup-stale-${Date.now()}.json`);
+  const tmpFile = path.join(os.tmpdir(), `hearthbill-backup-stale-${Date.now()}.json`);
   fs.writeFileSync(tmpFile, JSON.stringify(staleBackup));
 
   // Add more data after the backup was taken, so current data now exceeds the backup.
@@ -117,7 +117,7 @@ test('picking a malformed backup file shows an inline error, not the comparison/
 }) => {
   await loginNewUser(page);
 
-  const tmpFile = path.join(os.tmpdir(), `bill-tracker-backup-malformed-${Date.now()}.json`);
+  const tmpFile = path.join(os.tmpdir(), `hearthbill-backup-malformed-${Date.now()}.json`);
   fs.writeFileSync(tmpFile, 'this is not valid JSON {{{');
 
   await page.goto('/dashboard/settings');

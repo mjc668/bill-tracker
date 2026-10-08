@@ -294,7 +294,7 @@ def test_build_monthly_summary_text_is_compact_plain_text():
         unpaid_rows=[],
         language="en",
     )
-    assert title == "Monthly summary for June 2026 — Bill Tracker"
+    assert title == "Monthly summary for June 2026 — Hearthbill"
     assert "June 2026" in body
     assert "<html>" not in body
 
@@ -572,9 +572,9 @@ def test_send_notification_now_400_only_when_no_channel(client):
 @pytest.mark.parametrize(
     "language,expected_subject",
     [
-        ("en", "Bill Tracker test notification"),
-        ("pl", "Powiadomienie testowe Bill Tracker"),
-        ("de", "Bill Tracker Testbenachrichtigung"),
+        ("en", "Hearthbill test notification"),
+        ("pl", "Powiadomienie testowe Hearthbill"),
+        ("de", "Hearthbill Testbenachrichtigung"),
     ],
 )
 @patch("app.services.email.smtplib.SMTP")

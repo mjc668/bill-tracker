@@ -1,6 +1,6 @@
 {
-  "name": "bill-tracker",
-  "version": "3.1.1",
+  "name": "hearthbill-frontend",
+  "version": "0.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

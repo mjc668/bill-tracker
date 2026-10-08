@@ -1,4 +1,4 @@
-# E2E Testing Rules — Bill Tracker
+# E2E Testing Rules — Hearthbill
 
 ## Locator strategy
 - Use `getByRole`, `getByLabel`, `getByText` as primary locators.
