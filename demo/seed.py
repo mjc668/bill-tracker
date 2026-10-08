@@ -8,9 +8,9 @@ from datetime import date
 from pathlib import Path
 
 try:
-    import requests
+    import httpx
 except ImportError:
-    print("Missing dependency. Run: pip install requests")
+    print("Missing dependency. Run: pip install httpx")
     sys.exit(1)
 
 BASE_URL = os.environ.get("SEED_BASE_URL", "http://localhost:8010")
@@ -19,7 +19,7 @@ PASSWORD = "demo1234"
 DATA_FILE = Path(__file__).parent / "seed_data.json"
 
 
-def register(session: requests.Session) -> None:
+def register(session: httpx.Client) -> None:
     r = session.post(f"{BASE_URL}/auth/register", json={"email": EMAIL, "password": PASSWORD})
     if r.status_code == 201:
         print(f"  User created: {EMAIL}")
@@ -30,7 +30,7 @@ def register(session: requests.Session) -> None:
         sys.exit(1)
 
 
-def login(session: requests.Session) -> None:
+def login(session: httpx.Client) -> None:
     r = session.post(f"{BASE_URL}/auth/login", json={"email": EMAIL, "password": PASSWORD})
     if r.status_code != 200:
         print(f"  Login failed ({r.status_code}): {r.text}")
@@ -87,12 +87,12 @@ def inject_paid_today(data: dict) -> dict:
     return data
 
 
-def has_data(session: requests.Session) -> bool:
+def has_data(session: httpx.Client) -> bool:
     r = session.get(f"{BASE_URL}/bills")
     return r.status_code == 200 and len(r.json()) > 0
 
 
-def restore(session: requests.Session) -> None:
+def restore(session: httpx.Client) -> None:
     if has_data(session):
         print("  Demo data already present, skipping restore.")
         return
@@ -116,11 +116,11 @@ def main() -> None:
         print(f"Seed data file not found: {DATA_FILE}")
         sys.exit(1)
 
-    print("Bill Tracker — demo seed")
+    print("Hearthbill — demo seed")
     print(f"Target: {BASE_URL}")
     print()
 
-    with requests.Session() as session:
+    with httpx.Client() as session:
         print("1. Registering user...")
         register(session)
 

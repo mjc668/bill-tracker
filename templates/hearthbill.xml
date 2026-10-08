@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>Hearthbill</Name>
+  <Repository>ghcr.io/mjc668/hearthbill:latest</Repository>
+  <Registry>https://ghcr.io/mjc668/hearthbill</Registry>
+  <Network>bridge</Network>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Icon>https://raw.githubusercontent.com/mjc668/hearthbill/main/icon.png</Icon>
+  <WebUI>http://[IP]:[PORT:3010]</WebUI>
+  <Overview>Hearthbill is a private, self-hosted household bill tracker: recurring bills, due-date reminders, a payments ledger and a dashboard.</Overview>
+  <Description>Hearthbill keeps your household bills and due dates in one place, entirely on your own server. It runs as a single Docker container with all data in one SQLite file - no external database, no cloud account.
+
+Features:
+- Recurring bills: monthly, weekly and every-N schedules, with optional max occurrences and due-date anchoring.
+- Partial payments ledger: record full or partial payments against each due instance and track what is still owed.
+- Dashboard: upcoming and overdue bills, monthly spend stats and payment history.
+- Reminders via Apprise (ntfy, Discord, Telegram, and more) or SMTP email.
+- Multi-user household accounts with password reset.
+- Multiple currencies support.
+- Interface available in English, Polish and German.
+- Installable as a PWA on desktop and mobile.
+
+Data location: everything lives under /data - the SQLite database, the auto-generated JWT secret (/data/jwt_secret) and pre-upgrade backups. Back up the /data folder and you have backed up everything.
+
+Updates: images are rolling builds from the main branch; the footer of the UI shows the deployed commit. For stability, pin a sha tag from the container registry instead of latest.</Description>
+  <Project>https://github.com/mjc668/hearthbill</Project>
+  <!-- <Support>TODO: Unraid forum support thread URL</Support> -->
+  <TemplateURL>https://raw.githubusercontent.com/mjc668/hearthbill/main/templates/hearthbill.xml</TemplateURL>
+  <ReadMe>https://raw.githubusercontent.com/mjc668/hearthbill/main/README.md</ReadMe>
+  <Category>Productivity</Category>
+  <License>MIT</License>
+  <MinVer>6.12</MinVer>
+  <ExtraParams>--restart=unless-stopped</ExtraParams>
+  <DefaultTagDescription>Rolling builds from main (pin a sha tag for stability)</DefaultTagDescription>
+  <Changes>Rolling commit builds; see the GitHub commit history for changes.</Changes>
+  <Screenshot>https://raw.githubusercontent.com/mjc668/hearthbill/main/demo/public/bills.png</Screenshot>
+  <Config Name="WebUI Port" Target="3010" Default="3010" Mode="tcp" Description="Web UI and API port." Type="Port" Display="always" Required="true" Mask="">3010</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/hearthbill" Mode="rw" Description="SQLite database, JWT secret and pre-upgrade backups." Type="Path" Display="always" Required="true" Mask="">/mnt/user/appdata/hearthbill</Config>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="User ID the container runs as; set it to the owner of the appdata folder." Type="Variable" Display="advanced" Required="false" Mask="">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Group ID the container runs as; set it to the group of the appdata folder." Type="Variable" Display="advanced" Required="false" Mask="">100</Config>
+  <Config Name="TZ" Target="TZ" Default="Etc/UTC" Mode="" Description="Time zone, e.g. Europe/Warsaw (TZ database name)." Type="Variable" Display="advanced" Required="false" Mask="">Etc/UTC</Config>
+  <Config Name="ENVIRONMENT" Target="ENVIRONMENT" Default="production" Mode="" Description="Runtime environment; leave as production." Type="Variable" Display="advanced" Required="false" Mask="">production</Config>
+  <Config Name="COOKIE_SECURE" Target="COOKIE_SECURE" Default="false" Mode="" Description="Set true when served over HTTPS, otherwise browser login will fail." Type="Variable" Display="always" Required="false" Mask="">false</Config>
+  <Config Name="APP_BASE_URL" Target="APP_BASE_URL" Default="http://[IP]:[PORT:3010]" Mode="" Description="Public URL used in password-reset emails; replace the placeholder with your server URL or reverse-proxy hostname if needed." Type="Variable" Display="advanced" Required="false" Mask="">http://[IP]:[PORT:3010]</Config>
+  <Config Name="TRUST_PROXY" Target="TRUST_PROXY" Default="true" Mode="" Description="Leave true: the container's own proxy fronts the API, keeping client IPs accurate." Type="Variable" Display="advanced" Required="false" Mask="">true</Config>
+  <Config Name="JWT_SECRET" Target="JWT_SECRET" Default="" Mode="" Description="Leave empty to auto-generate and persist in /data/jwt_secret. Set it to keep sessions across reinstalls." Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+  <Config Name="APPRISE_BASE_URL" Target="APPRISE_BASE_URL" Default="" Mode="" Description="Apprise API gateway base URL, e.g. http://apprise:8000 (optional)." Type="Variable" Display="advanced" Required="false" Mask=""></Config>
+  <Config Name="APPRISE_KEY" Target="APPRISE_KEY" Default="" Mode="" Description="Apprise configuration key holding saved notification targets (optional)." Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+  <Config Name="APPRISE_URLS" Target="APPRISE_URLS" Default="" Mode="" Description="Stateless targets, e.g. ntfy://topic" Type="Variable" Display="advanced" Required="false" Mask=""></Config>
+  <Config Name="SMTP_HOST" Target="SMTP_HOST" Default="" Mode="" Description="SMTP server for email reminders (optional fallback to Apprise)." Type="Variable" Display="advanced" Required="false" Mask=""></Config>
+  <Config Name="SMTP_PORT" Target="SMTP_PORT" Default="587" Mode="" Description="SMTP submission port." Type="Variable" Display="advanced" Required="false" Mask="">587</Config>
+  <Config Name="SMTP_USER" Target="SMTP_USER" Default="" Mode="" Description="SMTP username." Type="Variable" Display="advanced" Required="false" Mask=""></Config>
+  <Config Name="SMTP_PASSWORD" Target="SMTP_PASSWORD" Default="" Mode="" Description="SMTP password." Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+  <Config Name="REMINDER_FROM" Target="REMINDER_FROM" Default="" Mode="" Description="From address used for reminder emails, e.g. noreply@example.com." Type="Variable" Display="advanced" Required="false" Mask=""></Config>
+</Container>

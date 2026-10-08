@@ -1,98 +1,41 @@
 services:
-  postgres:
-    image: postgres:17
-    container_name: postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-paytracker}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
-      POSTGRES_DB: ${POSTGRES_DB:-paytracker}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-paytracker}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    # The official entrypoint starts as root and drops to the postgres user via
-    # gosu, which needs these capabilities; everything else is dropped.
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - DAC_OVERRIDE
-      - FOWNER
-      - SETGID
-      - SETUID
-    security_opt:
-      - no-new-privileges:true
-
-  backend:
-    image: ghcr.io/mjc668/bill-tracker-backend:${BILL_TRACKER_VERSION:?Set BILL_TRACKER_VERSION (e.g. 3.1.0)}
-    container_name: backend
+  app:
+    image: ghcr.io/mjc668/hearthbill:${HEARTHBILL_TAG:-latest}
+    container_name: hearthbill
     restart: unless-stopped
     env_file: .env
-    environment:
-      DATABASE_URL: "postgresql://${POSTGRES_USER:-paytracker}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}@postgres:5432/${POSTGRES_DB:-paytracker}"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+    # Locked-down compose path: the image's unprivileged user (10001) owns a
+    # named volume out of the box. Unraid installs instead run as root with
+    # PUID/PGID; see the Community Applications template.
+    user: "10001:10001"
     ports:
-      # Localhost only: Caddy on the host (or in this compose network) is the
-      # public entry point.
-      - "127.0.0.1:8010:8000"
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-
-  frontend:
-    image: ghcr.io/mjc668/bill-tracker-frontend:${BILL_TRACKER_VERSION:?Set BILL_TRACKER_VERSION (e.g. 3.1.0)}
-    container_name: frontend
-    restart: unless-stopped
-    # No env_file here: the frontend must not receive backend secrets such as
-    # JWT_SECRET. Only pass the variables it reads at runtime (layout.tsx,
-    # proxy.ts use API_URL / API_PREFIX).
-    environment:
-      # Injected at request time so the same image works on any host without
-      # rebuilding; the baked build-time value is only a fallback.
-      API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8010}
-      API_PREFIX: ${API_PREFIX:-}
-    depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
-      interval: 10s
-      timeout: 5s
-      retries: 6
-      start_period: 30s
-    ports:
-      # Localhost only: Caddy on the host (or in this compose network) is the
-      # public entry point.
-      - "127.0.0.1:3010:3000"
+      # Localhost only: the host reverse proxy (Caddy/nginx/SWAG) is the
+      # public entry point. Point it at this single port for both the UI and
+      # /api — the container proxies /api internally.
+      - "127.0.0.1:3010:3010"
+    volumes:
+      - hearthbill_data:/data
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
 
   demo-data:
-    image: ghcr.io/mjc668/bill-tracker-demo:${BILL_TRACKER_VERSION:?Set BILL_TRACKER_VERSION (e.g. 3.1.0)}
-    container_name: demo-data
+    image: ghcr.io/mjc668/hearthbill:${HEARTHBILL_TAG:-latest}
+    container_name: hearthbill-demo-data
     profiles: ["demo"]
     depends_on:
-      backend:
+      app:
         condition: service_healthy
     restart: "no"
+    entrypoint: ["/backend/.venv/bin/python", "/app/demo/seed.py"]
     environment:
-      SEED_BASE_URL: "http://backend:8000"
+      SEED_BASE_URL: "http://app:3010/api"
+    user: "10001:10001"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
-  postgres_data:
+  hearthbill_data:

@@ -4,6 +4,17 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   images: { unoptimized: true },
+  async rewrites() {
+    // Same-origin mode: the browser calls /api/* and the Next server proxies
+    // to the backend running beside it in the all-in-one container (and in
+    // local dev, where uvicorn also listens on 8010).
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://127.0.0.1:8010/:path*",
+      },
+    ];
+  },
   async headers() {
     return [
       {

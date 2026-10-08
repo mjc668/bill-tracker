@@ -1,0 +1,5 @@
+<CommunityApplications>
+  <Profile>Hearthbill is a self-hosted household bill tracker: recurring bills, due-date reminders via Apprise or SMTP, a payments ledger and a dashboard. Runs as a single Docker container with all data in one SQLite file.</Profile>
+  <Icon>https://raw.githubusercontent.com/mjc668/hearthbill/main/icon.png</Icon>
+  <WebPage>https://github.com/mjc668/hearthbill</WebPage>
+</CommunityApplications>

@@ -1,31 +1,23 @@
-# Reference Caddy config for the bill-tracker deployment model.
+# Reference Caddy config for Hearthbill.
 #
-# - Caddy terminates HTTPS and serves the Next.js frontend.
-# - /api/* is reverse-proxied to the FastAPI backend with the /api prefix
-#   stripped (backend routes have no /api prefix).
+# Hearthbill v4 runs as a single container on one port: put Caddy in front for
+# HTTPS and proxy everything (UI and /api) to that port. No separate API
+# upstream, no header juggling — the container's built-in Next proxy forwards
+# /api to the backend, and Caddy appends the real client IP so the app's
+# TRUST_PROXY=true keeps rate limiting accurate.
+#
 # - Optional: `tls internal` for LAN-only use (self-signed certs; no ACME).
-# - Client IPs flow to the backend via X-Forwarded-For; when running behind a
-#   proxy, set TRUST_PROXY=true in the backend .env so it trusts those headers.
-#
-# The upstreams below are the host ports published by docker-compose.prod.yml
-# (127.0.0.1:3010 / 127.0.0.1:8010). If Caddy runs as a service in the same
-# compose network, use the service names and container ports instead
-# (reverse_proxy frontend:3000 / backend:8000) and drop the host publishing.
-#
-# Prefer a separate backend hostname instead? Then:
-#   - set NEXT_PUBLIC_API_URL to the https:// backend URL in the frontend env, and
-#   - remove the `handle /api/*` block, and set API_PREFIX="" (empty) in the
-#     backend .env so the backend serves routes at the root again.
-#
-# e.g.:
-#   frontend.example.com { reverse_proxy 127.0.0.1:3010 }
-#   api.example.com { reverse_proxy 127.0.0.1:8010 }
+# - Point this at the port published by docker-compose.prod.yml
+#   (127.0.0.1:3010). If Caddy runs in the same compose network, use the
+#   service name instead (reverse_proxy app:3010) and drop the host port.
 
-pay.local {
+app.example.com {
+	encode gzip
 	reverse_proxy 127.0.0.1:3010
-
-	handle /api/* {
-		uri strip_prefix /api
-		reverse_proxy 127.0.0.1:8010
-	}
 }
+
+# LAN-only example (self-signed certificate):
+# hearthbill.local {
+# 	tls internal
+# 	reverse_proxy 127.0.0.1:3010
+# }
