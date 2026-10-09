@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-2">
           <Image
-            src="/pt-logo.png"
+            src="/hearthbill-logo.png"
             alt="Hearthbill"
             width={80}
             height={80}

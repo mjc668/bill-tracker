@@ -51,7 +51,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center gap-2">
-          <Image src="/pt-logo.png" alt="Hearthbill" width={80} height={80} className="rounded-2xl shadow-md" priority />
+          <Image src="/hearthbill-logo.png" alt="Hearthbill" width={80} height={80} className="rounded-2xl shadow-md" priority />
           <h1 className="text-2xl tracking-tight text-green-700 dark:text-green-500">
             <span className="font-normal">Bill</span><span className="font-bold">Tracker</span>
           </h1>

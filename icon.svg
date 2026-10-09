@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hearthbill wombat">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22a06b"/>
+      <stop offset="1" stop-color="#15803d"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <!-- small rounded ear bumps -->
+  <path d="M104 258q-6-72 62-72 34 0 34 30v42z" fill="#6b5a52"/>
+  <path d="M408 258q6-72-62-72-34 0-34 30v42z" fill="#6b5a52"/>
+  <!-- squat, wide head -->
+  <rect x="76" y="176" width="360" height="286" rx="138" fill="#8a7a72"/>
+  <!-- broad cream muzzle -->
+  <ellipse cx="256" cy="378" rx="166" ry="96" fill="#d9cfc9"/>
+  <!-- small high-set eyes -->
+  <circle cx="188" cy="274" r="15" fill="#241a15"/>
+  <circle cx="324" cy="274" r="15" fill="#241a15"/>
+  <circle cx="193" cy="269" r="5" fill="#f5f1ee"/>
+  <circle cx="329" cy="269" r="5" fill="#f5f1ee"/>
+  <!-- broad flat nose -->
+  <rect x="176" y="318" width="160" height="62" rx="26" fill="#241a15"/>
+  <path d="M230 424q26 15 52 0" fill="none" stroke="#241a15" stroke-width="9" stroke-linecap="round"/>
+</svg>
