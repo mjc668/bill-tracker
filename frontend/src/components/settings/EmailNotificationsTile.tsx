@@ -456,7 +456,7 @@ export function EmailNotificationsTile({
           </p>
           <pre className="overflow-x-auto rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:bg-slate-900/40 dark:text-slate-300">
 {`# saved configuration inside the gateway
-APPRISE_KEY=wombill
+APPRISE_KEY=platybill
 # or pass targets per request (space/comma separated)
 APPRISE_URLS="ntfy://topic discord://webhook_id/webhook_token"`}
           </pre>

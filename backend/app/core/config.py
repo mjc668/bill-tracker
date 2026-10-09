@@ -12,7 +12,7 @@ _ALLOWED_JWT_ALGORITHMS = frozenset({"HS256", "HS384", "HS512"})
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file="../.env", extra="ignore")
 
-    database_url: str = "sqlite:////data/wombill.db"
+    database_url: str = "sqlite:////data/platybill.db"
 
     environment: str = "development"
     cookie_secure: bool = False

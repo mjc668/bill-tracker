@@ -1,4 +1,4 @@
-# E2E Testing Rules — Wombill
+# E2E Testing Rules — Platybill
 
 ## Locator strategy
 - Use `getByRole`, `getByLabel`, `getByText` as primary locators.

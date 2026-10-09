@@ -20,7 +20,7 @@ export async function downloadBackup(): Promise<void> {
   const a = document.createElement("a");
   a.href = url;
   const today = new Date().toISOString().slice(0, 10);
-  a.download = `wombill-backup-${today}.json`;
+  a.download = `platybill-backup-${today}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -82,7 +82,7 @@ export async function downloadXlsx(year: number): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `wombill-${year}.xlsx`;
+  a.download = `platybill-${year}.xlsx`;
   a.click();
   URL.revokeObjectURL(url);
 }

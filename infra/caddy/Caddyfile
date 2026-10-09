@@ -1,6 +1,6 @@
-# Reference Caddy config for Wombill.
+# Reference Caddy config for Platybill.
 #
-# Wombill v4 runs as a single container on one port: put Caddy in front for
+# Platybill v4 runs as a single container on one port: put Caddy in front for
 # HTTPS and proxy everything (UI and /api) to that port. No separate API
 # upstream, no header juggling — the container's built-in Next proxy forwards
 # /api to the backend, and Caddy appends the real client IP so the app's
@@ -17,7 +17,7 @@ app.example.com {
 }
 
 # LAN-only example (self-signed certificate):
-# wombill.local {
+# platybill.local {
 # 	tls internal
 # 	reverse_proxy 127.0.0.1:3010
 # }

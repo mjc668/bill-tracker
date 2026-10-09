@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Wombill SQLite backup script.
+# Platybill SQLite backup script.
 #
 # Usage: chmod +x backup.sh && ./backup.sh
 #
@@ -26,9 +26,9 @@ BACKUP_KEEP_DAYS="${BACKUP_KEEP_DAYS:-30}"
 
 mkdir -p "$BACKUP_DIR"
 
-BACKUP_FILE="$BACKUP_DIR/wombill-$(date +%Y%m%d-%H%M%S).db.gz"
+BACKUP_FILE="$BACKUP_DIR/platybill-$(date +%Y%m%d-%H%M%S).db.gz"
 TMP_FILE="$BACKUP_FILE.tmp"
-TMP_DB="/tmp/wombill-backup.db"
+TMP_DB="/tmp/platybill-backup.db"
 
 # Never leave a partial archive behind on failure.
 cleanup() {
@@ -41,7 +41,7 @@ docker compose -f "$COMPOSE_FILE" exec -T app python - "$TMP_DB" <<'PY'
 import sqlite3
 import sys
 
-source = sqlite3.connect("/data/wombill.db")
+source = sqlite3.connect("/data/platybill.db")
 target = sqlite3.connect(sys.argv[1])
 with target:
     source.backup(target)
@@ -56,6 +56,6 @@ gzip -t "$TMP_FILE"
 
 mv "$TMP_FILE" "$BACKUP_FILE"
 
-find "$BACKUP_DIR" -name 'wombill-*.db.gz' -mtime +"$BACKUP_KEEP_DAYS" -delete
+find "$BACKUP_DIR" -name 'platybill-*.db.gz' -mtime +"$BACKUP_KEEP_DAYS" -delete
 
 echo "Backup written: $BACKUP_FILE"

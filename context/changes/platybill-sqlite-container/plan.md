@@ -1,13 +1,13 @@
-# Wombill — SQLite + single container + commit builds + Unraid CA
+# Platybill — SQLite + single container + commit builds + Unraid CA
 
 ## Frozen decisions
 
-- Product/repo renamed to **Wombill** (mascot: wombat). GitHub repo `mjc668/wombill`, local folder `~/projects/wombill`.
-- **SQLite only** — no Postgres support. Single file at `/data/wombill.db`, WAL, FKs on.
+- Product/repo renamed to **Platybill** (mascot: wombat). GitHub repo `mjc668/platybill`, local folder `~/projects/platybill`.
+- **SQLite only** — no Postgres support. Single file at `/data/platybill.db`, WAL, FKs on.
 - **One all-in-one container**: Next standalone + uvicorn under supervisord. `/api/*` is reverse-proxied by Next rewrites to `127.0.0.1:8010`. One published port (3010), one volume (`/data`).
 - **Unraid runtime model**: PUID/PGID entrypoint (defaults 99/100 when root; compose runs as `user: 10001:10001` and the entrypoint skips privilege handling), JWT_SECRET auto-generated and persisted in `/data` when unset (env wins), `TZ` honored (tzdata installed).
-- **Builds from commits**: no GitHub Releases, no version-sync commits. On green `main`: `sha-<7>`, `main`, `latest`. Env var `WOMBILL_TAG` (default `latest`). UI footer shows the commit SHA.
-- **Unraid CA**: files prepared (`ca_profile.xml`, `templates/wombill.xml`, icons) but **not submitted** until the user has tested the container. User actions: GHCR package public, forum support thread, submission.
+- **Builds from commits**: no GitHub Releases, no version-sync commits. On green `main`: `sha-<7>`, `main`, `latest`. Env var `PLATYBILL_TAG` (default `latest`). UI footer shows the commit SHA.
+- **Unraid CA**: files prepared (`ca_profile.xml`, `templates/platybill.xml`, icons) but **not submitted** until the user has tested the container. User actions: GHCR package public, forum support thread, submission.
 - Existing deployment migrates Postgres → SQLite via `scripts/migrate_postgres_to_sqlite.py` (all rows, original IDs). Keep old `JWT_SECRET` to preserve browser sessions.
 
 ## Backend — SQLite
@@ -17,11 +17,11 @@
    - `Money(TypeDecorator)`: `impl = BigInteger`, Decimal ↔ integer cents, quantize 2dp. SQL aggregates inherit the column type (`func.sum` uses `ReturnTypeFromArgs`), so `sum`/`coalesce`/`case` keep returning `Decimal`.
 2. Models: swap `DateTime(timezone=True)` → `UTCDateTime`, `Numeric(12,2)` → `Money` (bill, payment, user, reset_token, restore_snapshot, category). Booleans: `server_default=sa.text("0"/"1")`; drop the `"null"` default on `users.monthly_summary_last_sent`. (`sqlalchemy.UUID` and `JSON` are SQLite-compatible already.)
 3. `app/core/database.py`: sqlite branch — `connect_args={"check_same_thread": False}`, PRAGMAs `journal_mode=WAL`, `foreign_keys=ON`, `busy_timeout=5000`, `synchronous=NORMAL`; no pool_size/max_overflow for sqlite.
-4. `app/core/config.py`: default `database_url = "sqlite:////data/wombill.db"`.
+4. `app/core/config.py`: default `database_url = "sqlite:////data/platybill.db"`.
 5. `app/services/stats.py`: `greatest(x, 0)` → `case((x > 0, x), else_=0)` (×3); `to_char(paid_on, 'YYYY-MM')` → `func.strftime('%Y-%m', Payment.paid_on)` (×2). `with_for_update()` in `auth.py` is silently omitted by SQLite — leave (single-writer serialization covers it).
 6. Migration squash: delete `backend/alembic/versions/*`, generate one baseline against an empty SQLite DB, hand-review against models; `alembic/env.py` adds `render_as_batch=True`. Pre-4.0 Postgres DBs migrate via ETL, not Alembic.
 7. Tests: `conftest.py` → session-scoped temp-file SQLite engine (`tmp_path_factory`), keep `create_all`/fixtures (rename `postgres_engine` → `sqlite_engine`); `pyproject.toml` drops `testcontainers` and runtime `psycopg2` (keep `psycopg2-binary` in dev for the ETL).
-8. ETL `backend/scripts/migrate_postgres_to_sqlite.py`: `--source postgresql://… --target ./wombill.db`; `alembic upgrade head` on target, refuse non-empty DB, copy users (id, email, password_hash, token_version, prefs, timestamps), categories, bill_templates, payment_instances (incl. soft-deletes), payments, restore_snapshots, password_reset_tokens with original IDs; per-table count + `SUM(amount)` reconciliation; abort on mismatch.
+8. ETL `backend/scripts/migrate_postgres_to_sqlite.py`: `--source postgresql://… --target ./platybill.db`; `alembic upgrade head` on target, refuse non-empty DB, copy users (id, email, password_hash, token_version, prefs, timestamps), categories, bill_templates, payment_instances (incl. soft-deletes), payments, restore_snapshots, password_reset_tokens with original IDs; per-table count + `SUM(amount)` reconciliation; abort on mismatch.
 
 ## Container
 
@@ -29,7 +29,7 @@
 - `docker/entrypoint.sh`: ensure `/data`; if root → apply PUID/PGID, chown `/data`, prepare/write `jwt_secret`, pre-migration `sqlite3.Connection.backup()` to `/data/backups/pre-upgrade-<ts>.db` (keep last 10), run `alembic upgrade head` as appuser, start supervisord (programs `user=appuser`); if non-root → same minus privilege bits. `HEALTHCHECK` on `127.0.0.1:3010`.
 - `docker/supervisord.conf`: `uvicorn app.main:app --host 127.0.0.1 --port 8010` (cwd `/backend`) + `node server.js` (`HOSTNAME=0.0.0.0 PORT=3010`, cwd `/frontend`).
 - `frontend/next.config.ts`: `rewrites()` `/api/:path*` → `http://127.0.0.1:8010/:path*` (baked; backend always local in-container). `frontend/src/proxy.ts`: exclude `api/` from the matcher so API calls bypass auth-routing/CSP.
-- Compose: dev `docker-compose.yml` builds locally; prod `docker-compose.prod.yml` uses `ghcr.io/mjc668/wombill:${WOMBILL_TAG:-latest}`; one `app` service (`user: 10001:10001`, cap_drop ALL, no-new-privileges), `wombill_data:/data`, port 3010 (dev all interfaces, prod 127.0.0.1). `demo` profile uses the same image with `entrypoint: /backend/.venv/bin/python /app/demo/seed.py`, `SEED_BASE_URL=http://app:3010/api`; `demo/seed.py` switches `requests` → `httpx`.
+- Compose: dev `docker-compose.yml` builds locally; prod `docker-compose.prod.yml` uses `ghcr.io/mjc668/platybill:${PLATYBILL_TAG:-latest}`; one `app` service (`user: 10001:10001`, cap_drop ALL, no-new-privileges), `platybill_data:/data`, port 3010 (dev all interfaces, prod 127.0.0.1). `demo` profile uses the same image with `entrypoint: /backend/.venv/bin/python /app/demo/seed.py`, `SEED_BASE_URL=http://app:3010/api`; `demo/seed.py` switches `requests` → `httpx`.
 - `infra/backup.sh`: SQLite backup via `docker compose exec` python + `docker compose cp`, gzip, retention.
 
 ## CI / builds from commits
@@ -40,13 +40,13 @@
 
 ## Unraid CA (prepare only, do not submit)
 
-- Root `ca_profile.xml` (`<Profile>`, `<Icon>`, `<WebPage>`), `templates/wombill.xml` (`<Repository>ghcr.io/mjc668/wombill:latest`, `<WebUI>http://[IP]:[PORT:3010]`, Config: WebUI port 3010, `/data` → `/mnt/user/appdata/wombill`, PUID=99/PGID=100, TZ, ENVIRONMENT=production, COOKIE_SECURE, APP_BASE_URL, TRUST_PROXY=true, JWT_SECRET (masked, optional), APPRISE_*, SMTP_*; `<Category>Productivity</Category>`, `<ExtraParams>--restart=unless-stopped</ExtraParams>`, `<MinVer>6.12`, MIT license, `<DefaultTagDescription>Rolling builds from main</DefaultTagDescription>`).
+- Root `ca_profile.xml` (`<Profile>`, `<Icon>`, `<WebPage>`), `templates/platybill.xml` (`<Repository>ghcr.io/mjc668/platybill:latest`, `<WebUI>http://[IP]:[PORT:3010]`, Config: WebUI port 3010, `/data` → `/mnt/user/appdata/platybill`, PUID=99/PGID=100, TZ, ENVIRONMENT=production, COOKIE_SECURE, APP_BASE_URL, TRUST_PROXY=true, JWT_SECRET (masked, optional), APPRISE_*, SMTP_*; `<Category>Productivity</Category>`, `<ExtraParams>--restart=unless-stopped</ExtraParams>`, `<MinVer>6.12`, MIT license, `<DefaultTagDescription>Rolling builds from main</DefaultTagDescription>`).
 - `icon.png` (128×128) + `icon.svg` — wombat mark; README Unraid/CA install section.
 - User prerequisites later: GHCR package public, forum support thread, submit at ca.unraid.net.
 
 ## Rebrand sweep
 
-`Bill Tracker` → `Wombill` across frontend i18n (en/pl/de), metadata/manifest, emails, README/docs, `AGENTS.md`, `infrastructure.md`, `.env.example`, LICENSE modification line, image/env references (`BILL_TRACKER_*` → `WOMBILL_*`). Upstream Pay Tracker credit stays.
+`Bill Tracker` → `Platybill` across frontend i18n (en/pl/de), metadata/manifest, emails, README/docs, `AGENTS.md`, `infrastructure.md`, `.env.example`, LICENSE modification line, image/env references (`BILL_TRACKER_*` → `PLATYBILL_*`). Upstream Pay Tracker credit stays.
 
 ## Verification
 
@@ -64,13 +64,13 @@ Container: build image, run with a bind mount, register → bill → payment →
 
 ## Status (implementation notes)
 
-- Repo/product renamed to Wombill; JWT issuer/audience changed to `wombill*` (users sign in once after migrating).
+- Repo/product renamed to Platybill; JWT issuer/audience changed to `platybill*` (users sign in once after migrating).
 - Supervisord config is generated by `docker/entrypoint.sh` (no static file) to support both root/PUID and non-root compose modes; renames base images fully-qualified for podman compatibility.
 - Boolean `server_default`s are `text("0"/"1")`; a `GUID` type decorator replaced `sqlalchemy.UUID` (SQLite reflected it as NUMERIC and broke `alembic check`).
 - `stats.py` uses `type_coerce(..., Money)` for `remaining` because TypeDecorator arithmetic delegates to the impl and loses the cents result processor.
 - ETL verified end-to-end (podman postgres:17 at the old head `b9c0d1e2f3a4`, seeded edge cases, exact count/sum reconciliation, Decimal/aware-datetime/UUID round-trip).
 - Container verified end-to-end (root+PUID 99/100 and non-root 10001 paths, register/bill/sync/stats through the Next `/api` rewrite, demo seeder via httpx).
-- CA files (`ca_profile.xml`, `templates/wombill.xml`, `icon.png`) are prepared but not submitted; forum support thread + public GHCR package still pending.
-- Local `.env` was migrated (Postgres vars removed, `WOMBILL_TAG`/`TRUST_PROXY` added); a backup copy ` .env.bak-*` was kept.
+- CA files (`ca_profile.xml`, `templates/platybill.xml`, `icon.png`) are prepared but not submitted; forum support thread + public GHCR package still pending.
+- Local `.env` was migrated (Postgres vars removed, `PLATYBILL_TAG`/`TRUST_PROXY` added); a backup copy ` .env.bak-*` was kept.
 - Final-tree re-verification (after the last rebrand edits): full check suite green (black/mypy/574 pytest, eslint/build/e2e tsc), image rebuilt from the current tree, non-root container smoke passed through the Next `/api` rewrite (register → bill → sync → partial pay → mark paid → stats → export → restore → logout) and restart produced a valid `pre-upgrade-*.db` snapshot with idempotent Alembic at `4fc2c1940c54`.
 

@@ -47,7 +47,7 @@
         "signedInAs": "Angemeldet als"
     },
     "Dashboard": {
-        "title": "Willkommen bei Wombill",
+        "title": "Willkommen bei Platybill",
         "subtitle": "Verwalten Sie Ihre Haushaltsrechnungen an einem Ort.",
         "paymentsTitle": "Zahlungen",
         "paymentsDesc": "Rechnungen dieses Monats anzeigen und als bezahlt markieren",
@@ -339,7 +339,7 @@
     "BackupButton": {
         "ariaLabel": "Backup herunterladen",
         "dialogTitle": "Backup herunterladen",
-        "dialogDescription": "Es wird eine vollständige Kopie aller Wombill-Daten heruntergeladen – Rechnungsvorlagen, Zahlungshistorie und Benutzerkonten. Bewahren Sie die Datei sicher auf.",
+        "dialogDescription": "Es wird eine vollständige Kopie aller Platybill-Daten heruntergeladen – Rechnungsvorlagen, Zahlungshistorie und Benutzerkonten. Bewahren Sie die Datei sicher auf.",
         "cancel": "Abbrechen",
         "confirm": "Herunterladen",
         "downloading": "Wird heruntergeladen…",
@@ -414,7 +414,7 @@
             "masterToggle": "Benachrichtigungen aktivieren",
             "setupTitle": "Apprise installieren und verbinden",
             "setupAppriseIntro": "Apprise ist der primäre Zustellkanal. Starte ein Apprise-API-Gateway und setze APPRISE_BASE_URL in der .env des Backends — das Gateway kann die Ziel-URLs selbst speichern.",
-            "setupGatewayNote": "Empfohlene Images: caronc/apprise oder lscr.io/linuxserver/apprise-api. Hinweis: apprise-go ist nur ein CLI ohne HTTP-Server und benötigt einen Wrapper, bevor Wombill es aufrufen kann.",
+            "setupGatewayNote": "Empfohlene Images: caronc/apprise oder lscr.io/linuxserver/apprise-api. Hinweis: apprise-go ist nur ein CLI ohne HTTP-Server und benötigt einen Wrapper, bevor Platybill es aufrufen kann.",
             "setupMinimalLabel": "1. Gateway starten und Minimum setzen (.env)",
             "setupOptionalLabel": "2. Optional: Ziele oder gespeicherter Schlüssel (.env)",
             "setupReachability": "Der Backend-Container muss das Gateway erreichen können — nutze die Host-IP oder ein gemeinsames Docker-Netz (localhost zeigt auf das Backend selbst). Danach oben „Testbenachrichtigung senden“ verwenden.",
@@ -470,7 +470,7 @@
         },
         "backup": {
             "title": "Daten sichern",
-            "description": "Laden Sie eine vollständige Kopie aller Wombill-Daten als JSON-Datei herunter."
+            "description": "Laden Sie eine vollständige Kopie aller Platybill-Daten als JSON-Datei herunter."
         },
         "restore": {
             "title": "Daten wiederherstellen",

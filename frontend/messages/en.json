@@ -47,7 +47,7 @@
         "signedInAs": "Signed in as"
     },
     "Dashboard": {
-        "title": "Welcome to Wombill",
+        "title": "Welcome to Platybill",
         "subtitle": "Manage your household bills in one place.",
         "paymentsTitle": "Payments",
         "paymentsDesc": "View and mark this month's bills as paid",
@@ -335,7 +335,7 @@
     "BackupButton": {
         "ariaLabel": "Download backup",
         "dialogTitle": "Download Backup",
-        "dialogDescription": "This will download a complete copy of all Wombill data — bill templates, payment history, and user accounts. Store the file securely.",
+        "dialogDescription": "This will download a complete copy of all Platybill data — bill templates, payment history, and user accounts. Store the file securely.",
         "cancel": "Cancel",
         "confirm": "Download",
         "downloading": "Downloading…",
@@ -410,7 +410,7 @@
             "masterToggle": "Enable notifications",
             "setupTitle": "How to install and connect Apprise",
             "setupAppriseIntro": "Apprise is the primary delivery channel. Run an Apprise API gateway and set APPRISE_BASE_URL in the backend .env — the gateway can hold the target URLs itself.",
-            "setupGatewayNote": "Recommended images: caronc/apprise or lscr.io/linuxserver/apprise-api. Note: apprise-go is CLI-only with no HTTP server, so it needs a wrapper before Wombill can call it.",
+            "setupGatewayNote": "Recommended images: caronc/apprise or lscr.io/linuxserver/apprise-api. Note: apprise-go is CLI-only with no HTTP server, so it needs a wrapper before Platybill can call it.",
             "setupMinimalLabel": "1. Start the gateway, then set the minimum (.env)",
             "setupOptionalLabel": "2. Optional: targets or a saved key (.env)",
             "setupReachability": "The backend container must be able to reach the gateway — use the host IP or a shared Docker network (localhost points at the backend itself). Then use Send test notification above.",
@@ -466,7 +466,7 @@
         },
         "backup": {
             "title": "Backup Data",
-            "description": "Download a complete copy of all your Wombill data as a JSON file."
+            "description": "Download a complete copy of all your Platybill data as a JSON file."
         },
         "restore": {
             "title": "Restore Data",

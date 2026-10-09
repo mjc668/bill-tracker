@@ -1,6 +1,6 @@
 # Security Policy
 
-Wombill is a self-hosted household application maintained by a small team.
+Platybill is a self-hosted household application maintained by a small team.
 We take security reports seriously and appreciate responsible disclosure.
 
 ## Reporting a vulnerability
@@ -22,7 +22,7 @@ Please include:
 
 ## Scope
 
-**In scope:** the Wombill application in this repository — frontend, backend,
+**In scope:** the Platybill application in this repository — frontend, backend,
 the all-in-one Docker image, compose files, backup/restore scripts, and the CI
 workflows.
 
@@ -33,7 +33,7 @@ resource-exhaustion denial of service, social engineering, and physical attacks.
 
 ## Supported versions
 
-Wombill has no versioned releases: every green commit on `main` is published
+Platybill has no versioned releases: every green commit on `main` is published
 as an immutable `sha-<7>` image tag, and `main`/`latest` roll forward to the
 newest build. Only the **newest build** receives security fixes — upgrade to the
 latest tag (or re-pull the tag you follow) to stay supported.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Wombill container entrypoint.
+# Platybill container entrypoint.
 #
 # Runs the app as a single container: permission setup, JWT secret
 # persistence, a pre-migration SQLite backup, Alembic migrations and then
@@ -12,13 +12,13 @@
 set -euo pipefail
 
 DATA_DIR="${DATA_DIR:-/data}"
-DB_PATH="${DB_PATH:-$DATA_DIR/wombill.db}"
+DB_PATH="${DB_PATH:-$DATA_DIR/platybill.db}"
 BACKUP_DIR="$DATA_DIR/backups"
 BACKUP_KEEP="${BACKUP_KEEP:-10}"
 APP_USER="appuser"
 VENV="/backend/.venv"
 
-log() { printf '[wombill] %s\n' "$*"; }
+log() { printf '[platybill] %s\n' "$*"; }
 
 mkdir -p "$DATA_DIR" "$BACKUP_DIR" 2>/dev/null || {
   log "ERROR: cannot create $DATA_DIR — check the volume permissions"
@@ -138,5 +138,5 @@ EOF
   if [ -n "$SUPERVISOR_USER" ]; then echo "$SUPERVISOR_USER"; fi
 } >"$SUPERVISOR_CONF"
 
-log "Starting Wombill on port 3010"
+log "Starting Platybill on port 3010"
 exec supervisord -c "$SUPERVISOR_CONF"

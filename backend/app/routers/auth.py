@@ -49,9 +49,9 @@ from app.services.reminder_job import (
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-_TEST_NOTIFICATION_TITLE = "Wombill test notification"
+_TEST_NOTIFICATION_TITLE = "Platybill test notification"
 _TEST_NOTIFICATION_BODY = (
-    "This is a test notification from Wombill. "
+    "This is a test notification from Platybill. "
     "If you can read this, notifications are working."
 )
 

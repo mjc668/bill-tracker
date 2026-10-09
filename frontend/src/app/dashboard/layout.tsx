@@ -82,9 +82,9 @@ export default function DashboardLayout({
             href="/dashboard"
             className="flex items-center gap-2 text-green-700 transition-opacity hover:opacity-80 dark:text-green-500"
           >
-            <Image src="/wombill-logo.png" alt="Wombill" width={32} height={32} className="rounded-xl" />
+            <Image src="/platybill-logo.png" alt="Platybill" width={32} height={32} className="rounded-xl" />
             <span className="text-lg tracking-tight">
-              <span className="font-normal">Wom</span><span className="font-bold">bill</span>
+              <span className="font-normal">Platy</span><span className="font-bold">bill</span>
             </span>
           </Link>
 

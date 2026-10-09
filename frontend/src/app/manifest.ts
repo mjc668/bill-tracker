@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Wombill",
-    short_name: "Wombill",
+    name: "Platybill",
+    short_name: "Platybill",
     description: "Household bill tracking made simple",
     start_url: "/",
     display: "standalone",

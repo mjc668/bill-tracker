@@ -6,8 +6,8 @@ from jose import jwt
 
 from app.core.config import settings
 
-_JWT_ISSUER = "wombill-backend"
-_JWT_AUDIENCE = "wombill"
+_JWT_ISSUER = "platybill-backend"
+_JWT_AUDIENCE = "platybill"
 
 _COMMON_PASSWORDS: frozenset[str] = frozenset(
     {

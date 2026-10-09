@@ -1,7 +1,7 @@
 [project]
-name = "wombill-backend"
+name = "platybill-backend"
 version = "0.0.0"
-description = "Wombill backend — FastAPI + SQLAlchemy + Alembic"
+description = "Platybill backend — FastAPI + SQLAlchemy + Alembic"
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.18.4",

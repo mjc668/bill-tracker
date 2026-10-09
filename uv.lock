@@ -364,7 +364,7 @@ wheels = [
 ]
 
 [[package]]
-name = "wombill"
+name = "platybill"
 version = "0.0.0"
 source = { virtual = "." }
 dependencies = [

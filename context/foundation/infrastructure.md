@@ -1,5 +1,5 @@
 ---
-project: wombill
+project: platybill
 researched_at: 2026-06-24
 updated: 2026-10-08
 recommended_platform: self-hosted-docker-compose
@@ -16,7 +16,7 @@ tech_stack:
 
 **Self-hosted Docker with one all-in-one image published to GitHub Container Registry (GHCR).**
 
-Wombill is distributed as a single image (`ghcr.io/mjc668/wombill`) containing the Next.js standalone frontend and the FastAPI backend. Inside the container, supervisord runs uvicorn on `127.0.0.1:8010` and Next on `0.0.0.0:3010`; the Next server reverse-proxies `/api/*` to the backend, so the browser only ever talks same-origin. One published port (`3010`) and one volume (`/data`) are all that's required — `/data` holds the SQLite database (`wombill.db`, WAL), the auto-generated JWT secret (`jwt_secret`), and pre-upgrade backups (`backups/`). There is no database service and no second container.
+Platybill is distributed as a single image (`ghcr.io/mjc668/platybill`) containing the Next.js standalone frontend and the FastAPI backend. Inside the container, supervisord runs uvicorn on `127.0.0.1:8010` and Next on `0.0.0.0:3010`; the Next server reverse-proxies `/api/*` to the backend, so the browser only ever talks same-origin. One published port (`3010`) and one volume (`/data`) are all that's required — `/data` holds the SQLite database (`platybill.db`, WAL), the auto-generated JWT secret (`jwt_secret`), and pre-upgrade backups (`backups/`). There is no database service and no second container.
 
 Images are published from every green `main` commit in CI: `sha-<7>` (immutable), plus rolling `main` and `latest` pointers. There are no GitHub Releases or version numbers; the app footer shows the deployed commit. Users pull and run via `docker compose up -d`.
 
@@ -37,7 +37,7 @@ Platforms were evaluated against five agent-friendly criteria: CLI-first tooling
 
 #### 1. Self-hosted Docker (Recommended)
 
-One image, one port, one volume. Publishing `ghcr.io/mjc668/wombill` and providing a `docker-compose.prod.yml` that references a pinned tag is zero infrastructure overhead — no platform account, no vendor dependency, no managed service fees, and no separate database to operate. A Hetzner CX22 (2 vCPU, 4 GB RAM, ~€3.79/month) comfortably runs the container with headroom. Cloudflare's free tier handles SSL termination and global CDN caching, making single-region deployments feel fast globally. The operational overhead (WAL-safe backup script, reverse-proxy config) is real but manageable for a solo dev and mirrors the household's existing self-host comfort level.
+One image, one port, one volume. Publishing `ghcr.io/mjc668/platybill` and providing a `docker-compose.prod.yml` that references a pinned tag is zero infrastructure overhead — no platform account, no vendor dependency, no managed service fees, and no separate database to operate. A Hetzner CX22 (2 vCPU, 4 GB RAM, ~€3.79/month) comfortably runs the container with headroom. Cloudflare's free tier handles SSL termination and global CDN caching, making single-region deployments feel fast globally. The operational overhead (WAL-safe backup script, reverse-proxy config) is real but manageable for a solo dev and mirrors the household's existing self-host comfort level.
 
 #### 2. Railway
 
@@ -51,7 +51,7 @@ Render offers managed deployments with a Frankfurt EU region and both `llms.txt`
 
 ### Devil's Advocate — Weaknesses
 
-1. **No managed database backups.** The SQLite file lives on a Docker volume, so snapshots are your job. Wombill mitigates this: `infra/backup.sh` takes WAL-safe snapshots on the host, the entrypoint copies the database to `/data/backups` before every migration, and the in-app JSON export gives users a portable per-account backup. A broken backup cron is still silently broken until disaster.
+1. **No managed database backups.** The SQLite file lives on a Docker volume, so snapshots are your job. Platybill mitigates this: `infra/backup.sh` takes WAL-safe snapshots on the host, the entrypoint copies the database to `/data/backups` before every migration, and the in-app JSON export gives users a portable per-account backup. A broken backup cron is still silently broken until disaster.
 
 2. **Zero-downtime deploys don't come free.** `docker compose up -d` causes a brief service restart gap. A blue-green deploy requires additional scripting not included in a basic Docker Compose setup.
 
@@ -63,7 +63,7 @@ Render offers managed deployments with a Frankfurt EU region and both `llms.txt`
 
 ### Pre-Mortem — How This Could Fail
 
-The household self-hosted Wombill on a Hetzner CX22 in 2026. Eight months later, the `/data` volume on the VPS disk filled up — Docker named volumes don't auto-expand, and nobody was monitoring disk usage. Writes to `wombill.db` started failing with `SQLITE_FULL`, and the app returned errors. The `infra/backup.sh` cron that was set up on day one had been silently failing for two months because the compose project name had changed. The last usable snapshot was two months old; reconstructing the missing payments required cross-referencing the household's bank statements. The second failure: Let's Encrypt certificate renewal failed because the Certbot container wasn't in the Compose file — it had been set up separately via SSH and was forgotten when the server was reprovisioned. The PWA install broke for household members because the cert expired. Both failures were entirely preventable with monitoring, but monitoring wasn't included in the MVP scope.
+The household self-hosted Platybill on a Hetzner CX22 in 2026. Eight months later, the `/data` volume on the VPS disk filled up — Docker named volumes don't auto-expand, and nobody was monitoring disk usage. Writes to `platybill.db` started failing with `SQLITE_FULL`, and the app returned errors. The `infra/backup.sh` cron that was set up on day one had been silently failing for two months because the compose project name had changed. The last usable snapshot was two months old; reconstructing the missing payments required cross-referencing the household's bank statements. The second failure: Let's Encrypt certificate renewal failed because the Certbot container wasn't in the Compose file — it had been set up separately via SSH and was forgotten when the server was reprovisioned. The PWA install broke for household members because the cert expired. Both failures were entirely preventable with monitoring, but monitoring wasn't included in the MVP scope.
 
 ### Unknown Unknowns
 
@@ -73,15 +73,15 @@ The household self-hosted Wombill on a Hetzner CX22 in 2026. Eight months later,
 
 3. **Docker Compose `restart: unless-stopped` is not the same as systemd supervision.** If the VPS reboots, Docker itself must autostart (enabled by default on most distros), then Compose services restart. But if Docker fails to start (e.g., after a kernel update requiring a reboot), services don't come up. Set `docker.service` as a systemd dependency: `systemctl enable docker`.
 
-4. **GHCR image visibility.** GitHub Container Registry images default to private if the repo is private. Publishing Wombill images for self-hosters requires explicitly setting the package visibility to public — check GitHub repo → Packages → `wombill` → Settings.
+4. **GHCR image visibility.** GitHub Container Registry images default to private if the repo is private. Publishing Platybill images for self-hosters requires explicitly setting the package visibility to public — check GitHub repo → Packages → `platybill` → Settings.
 
-5. **Cloudflare proxying WebSocket / long-poll.** Cloudflare's free plan proxies HTTP/HTTPS and WebSocket connections but has a 100-second timeout on connections. For Wombill this is irrelevant (no WebSockets), but worth knowing if the app ever adds real-time features.
+5. **Cloudflare proxying WebSocket / long-poll.** Cloudflare's free plan proxies HTTP/HTTPS and WebSocket connections but has a 100-second timeout on connections. For Platybill this is irrelevant (no WebSockets), but worth knowing if the app ever adds real-time features.
 
 ## Operational Story
 
 - **Preview deploys**: No platform-provided preview URLs. Test locally with `docker compose up --build` before pushing. For staging, a second VPS or a `staging` branch with a separate Compose override (`docker-compose.staging.yml`) is the standard pattern.
 - **Secrets**: `.env` file on the VPS (never committed). Copy to server via `scp .env user@server:/app/.env` or use a GitHub Actions secret → SSH deploy step that writes the file before `docker compose up`. `JWT_SECRET` may be left empty: the entrypoint generates one and persists it at `/data/jwt_secret`; setting it explicitly keeps a stable secret across reinstalls.
-- **Rollback**: set `WOMBILL_TAG` to a previous immutable `sha-<7>` tag and `docker compose -f docker-compose.prod.yml up -d`. Rollback time: ~60 seconds. If the bad deploy had already run a database migration, restore the matching pre-upgrade snapshot from `/data/backups/pre-upgrade-<timestamp>.db` before starting the old image (Alembic downgrades are not the supported path on SQLite).
+- **Rollback**: set `PLATYBILL_TAG` to a previous immutable `sha-<7>` tag and `docker compose -f docker-compose.prod.yml up -d`. Rollback time: ~60 seconds. If the bad deploy had already run a database migration, restore the matching pre-upgrade snapshot from `/data/backups/pre-upgrade-<timestamp>.db` before starting the old image (Alembic downgrades are not the supported path on SQLite).
 - **Approval**: All production actions (deploy, rollback, secret rotation, server access) require a human SSH session. No unattended agent access to the VPS.
 - **Logs**: `docker compose -f docker-compose.prod.yml logs -f --tail=100 app` (supervisord merges uvicorn and Next output into the container log). For persistent logs across restarts: configure Docker's `json-file` log driver with `max-size: 10m` and `max-file: 3` in `/etc/docker/daemon.json`.
 
@@ -127,7 +127,7 @@ Stateless example:
 
 ```bash
 APPRISE_BASE_URL=http://apprise:8000
-APPRISE_URLS="ntfy://wombill discord://1234/abcdef"
+APPRISE_URLS="ntfy://platybill discord://1234/abcdef"
 ```
 
 Apprise failures fall back to email immediately (no queue or retry). `email_sent_at` is stamped only for email deliveries; reminder flags are set for any successful channel.
@@ -141,10 +141,10 @@ Apprise failures fall back to email immediately (no queue or retry). `email_sent
 | APScheduler stops without crashing | Devil's advocate | L | M | Add a `/health` probe (the image already has a `HEALTHCHECK`) and monitor for missing reminders; alerts on missed scheduled sends |
 | Let's Encrypt cert expires | Pre-mortem | M | M | Use Cloudflare as TLS proxy (eliminates cert management entirely); or put Certbot renewal in a Compose service with `restart: always` |
 | Docker doesn't autostart after VPS reboot | Unknown unknowns | L | M | `systemctl enable docker`; `restart: unless-stopped` is set on the app service; test with `sudo reboot` before going live |
-| GHCR image accidentally private | Unknown unknowns | L | L | Explicitly set package visibility to Public in GitHub repo → Packages → `wombill` → Settings |
+| GHCR image accidentally private | Unknown unknowns | L | L | Explicitly set package visibility to Public in GitHub repo → Packages → `platybill` → Settings |
 | DST causes reminder timing shift | Unknown unknowns | L | L | Set the container `TZ` deliberately (or `Etc/UTC`); document the UTC-to-local offset in the user-facing settings UI |
 | Zero-downtime deploy gap | Devil's advocate | H | L | For a household app, a 5-10 second restart gap is acceptable; document expected downtime during deploys |
-| Bad build runs a schema migration | Devil's advocate | L | M | Pin `WOMBILL_TAG` to a `sha-<7>` tag; pre-upgrade snapshots in `/data/backups` make rollback a file copy |
+| Bad build runs a schema migration | Devil's advocate | L | M | Pin `PLATYBILL_TAG` to a `sha-<7>` tag; pre-upgrade snapshots in `/data/backups` make rollback a file copy |
 
 ## Getting Started
 
@@ -158,23 +158,23 @@ These steps assume Hetzner CX22 (Ubuntu 24.04) + Cloudflare DNS + GHCR-published
    usermod -aG docker $USER
    ```
 
-2. **Get images to GHCR:** CI already publishes multi-arch `ghcr.io/mjc668/wombill` from green `main` commits (`sha-<7>`, `main`, `latest`). No manual publishing step is needed; just confirm the package visibility is public (GitHub repo → Packages → `wombill` → Settings).
+2. **Get images to GHCR:** CI already publishes multi-arch `ghcr.io/mjc668/platybill` from green `main` commits (`sha-<7>`, `main`, `latest`). No manual publishing step is needed; just confirm the package visibility is public (GitHub repo → Packages → `platybill` → Settings).
 
 3. **Write a production Compose file** (`docker-compose.prod.yml`) referencing a pinned image tag instead of a `build:` directive:
    ```yaml
    services:
      app:
-       image: ghcr.io/mjc668/wombill:${WOMBILL_TAG:-latest}
+       image: ghcr.io/mjc668/platybill:${PLATYBILL_TAG:-latest}
        restart: unless-stopped
        env_file: .env
        user: "10001:10001"
        ports:
          - "127.0.0.1:3010:3010"
        volumes:
-         - wombill_data:/data
+         - platybill_data:/data
 
    volumes:
-     wombill_data:
+     platybill_data:
    ```
 
 4. **Set up Cloudflare:** Point your domain's nameservers to Cloudflare, add an A record to the VPS IP, enable the orange-cloud proxy. This gives free SSL, CDN, and DDoS mitigation — no Certbot needed. Set `COOKIE_SECURE=true` and `TRUST_PROXY=true` in `.env`.
@@ -190,12 +190,12 @@ These steps assume Hetzner CX22 (Ubuntu 24.04) + Cloudflare DNS + GHCR-published
 
 6. **Set up the SQLite backup cron** (on the VPS, from a checkout of this repo):
    ```bash
-   # /etc/cron.daily/wombill-backup
+   # /etc/cron.daily/platybill-backup
    #!/bin/bash
    cd /app && ./infra/backup.sh
-   # Writes ./backups/wombill-<timestamp>.db.gz and prunes files older
+   # Writes ./backups/platybill-<timestamp>.db.gz and prunes files older
    # than BACKUP_KEEP_DAYS (default 30). Test restore quarterly:
-   # gunzip -c backups/wombill-*.db.gz > /tmp/restore.db
+   # gunzip -c backups/platybill-*.db.gz > /tmp/restore.db
    ```
 
 ## HTTPS & PWA deployment
@@ -221,7 +221,7 @@ pay.example.com {
 }
 ```
 
-(Use the compose service name `app:3010` instead when Caddy runs in the same compose network as Wombill.)
+(Use the compose service name `app:3010` instead when Caddy runs in the same compose network as Platybill.)
 
 - **Public domain:** point an A record at the host; Caddy obtains and renews Let's Encrypt certificates automatically.
 - **LAN-only:** use a local name (e.g. `pay.local`) and add `tls internal`. Caddy signs with its own CA — install Caddy's root certificate on every device, or PWA installation can fail silently on some platforms.
@@ -253,7 +253,7 @@ Point the domain's nameservers at Cloudflare and proxy the A record to the host.
 ### Verify the install
 
 1. DevTools → Application → Cookies: `access_token` and `auth_logged_in` show the `Secure` flag.
-2. DevTools → Application → Service Workers: the service worker is active and the manifest lists the Wombill icons.
+2. DevTools → Application → Service Workers: the service worker is active and the manifest lists the Platybill icons.
 3. The install prompt appears (Chrome/Edge address bar; iOS Safari → Share → Add to Home Screen).
 4. Layout stays usable at 375px.
 

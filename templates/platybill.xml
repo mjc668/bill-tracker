@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
 <Container version="2">
-  <Name>Wombill</Name>
-  <Repository>ghcr.io/mjc668/wombill:latest</Repository>
-  <Registry>https://ghcr.io/mjc668/wombill</Registry>
+  <Name>Platybill</Name>
+  <Repository>ghcr.io/mjc668/platybill:latest</Repository>
+  <Registry>https://ghcr.io/mjc668/platybill</Registry>
   <Network>bridge</Network>
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
-  <Icon>https://raw.githubusercontent.com/mjc668/wombill/main/icon.png</Icon>
+  <Icon>https://raw.githubusercontent.com/mjc668/platybill/main/icon.png</Icon>
   <WebUI>http://[IP]:[PORT:3010]</WebUI>
-  <Overview>Wombill is a private, self-hosted household bill tracker: recurring bills, due-date reminders, a payments ledger and a dashboard.</Overview>
-  <Description>Wombill keeps your household bills and due dates in one place, entirely on your own server. It runs as a single Docker container with all data in one SQLite file - no external database, no cloud account.
+  <Overview>Platybill is a private, self-hosted household bill tracker: recurring bills, due-date reminders, a payments ledger and a dashboard.</Overview>
+  <Description>Platybill keeps your household bills and due dates in one place, entirely on your own server. It runs as a single Docker container with all data in one SQLite file - no external database, no cloud account.
 
 Features:
 - Recurring bills: monthly, weekly and every-N schedules, with optional max occurrences and due-date anchoring.
@@ -24,19 +24,19 @@ Features:
 Data location: everything lives under /data - the SQLite database, the auto-generated JWT secret (/data/jwt_secret) and pre-upgrade backups. Back up the /data folder and you have backed up everything.
 
 Updates: images are rolling builds from the main branch; the footer of the UI shows the deployed commit. For stability, pin a sha tag from the container registry instead of latest.</Description>
-  <Project>https://github.com/mjc668/wombill</Project>
+  <Project>https://github.com/mjc668/platybill</Project>
   <!-- <Support>TODO: Unraid forum support thread URL</Support> -->
-  <TemplateURL>https://raw.githubusercontent.com/mjc668/wombill/main/templates/wombill.xml</TemplateURL>
-  <ReadMe>https://raw.githubusercontent.com/mjc668/wombill/main/README.md</ReadMe>
+  <TemplateURL>https://raw.githubusercontent.com/mjc668/platybill/main/templates/platybill.xml</TemplateURL>
+  <ReadMe>https://raw.githubusercontent.com/mjc668/platybill/main/README.md</ReadMe>
   <Category>Productivity</Category>
   <License>MIT</License>
   <MinVer>6.12</MinVer>
   <ExtraParams>--restart=unless-stopped</ExtraParams>
   <DefaultTagDescription>Rolling builds from main (pin a sha tag for stability)</DefaultTagDescription>
   <Changes>Rolling commit builds; see the GitHub commit history for changes.</Changes>
-  <Screenshot>https://raw.githubusercontent.com/mjc668/wombill/main/demo/public/bills.png</Screenshot>
+  <Screenshot>https://raw.githubusercontent.com/mjc668/platybill/main/demo/public/bills.png</Screenshot>
   <Config Name="WebUI Port" Target="3010" Default="3010" Mode="tcp" Description="Web UI and API port." Type="Port" Display="always" Required="true" Mask="">3010</Config>
-  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/wombill" Mode="rw" Description="SQLite database, JWT secret and pre-upgrade backups." Type="Path" Display="always" Required="true" Mask="">/mnt/user/appdata/wombill</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/platybill" Mode="rw" Description="SQLite database, JWT secret and pre-upgrade backups." Type="Path" Display="always" Required="true" Mask="">/mnt/user/appdata/platybill</Config>
   <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="User ID the container runs as; set it to the owner of the appdata folder." Type="Variable" Display="advanced" Required="false" Mask="">99</Config>
   <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Group ID the container runs as; set it to the group of the appdata folder." Type="Variable" Display="advanced" Required="false" Mask="">100</Config>
   <Config Name="TZ" Target="TZ" Default="Etc/UTC" Mode="" Description="Time zone, e.g. Europe/Warsaw (TZ database name)." Type="Variable" Display="advanced" Required="false" Mask="">Etc/UTC</Config>

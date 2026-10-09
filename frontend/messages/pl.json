@@ -47,7 +47,7 @@
         "signedInAs": "Zalogowany jako"
     },
     "Dashboard": {
-        "title": "Witaj w Wombill",
+        "title": "Witaj w Platybill",
         "subtitle": "Zarządzaj rachunkami domowymi w jednym miejscu.",
         "paymentsTitle": "Płatności",
         "paymentsDesc": "Przeglądaj i oznaczaj rachunki z tego miesiąca jako opłacone",
@@ -335,7 +335,7 @@
     "BackupButton": {
         "ariaLabel": "Pobierz kopię zapasową",
         "dialogTitle": "Pobierz kopię zapasową",
-        "dialogDescription": "Zostanie pobrana pełna kopia danych Wombill — szablony rachunków, historia płatności i konta użytkowników. Przechowuj plik w bezpiecznym miejscu.",
+        "dialogDescription": "Zostanie pobrana pełna kopia danych Platybill — szablony rachunków, historia płatności i konta użytkowników. Przechowuj plik w bezpiecznym miejscu.",
         "cancel": "Anuluj",
         "confirm": "Pobierz",
         "downloading": "Pobieranie…",
@@ -406,7 +406,7 @@
             "masterToggle": "Włącz powiadomienia",
             "setupTitle": "Jak zainstalować i podłączyć Apprise",
             "setupAppriseIntro": "Apprise to podstawowy kanał dostarczania. Uruchom bramkę Apprise API i ustaw APPRISE_BASE_URL w pliku .env backendu — bramka może sama przechowywać adresy docelowe.",
-            "setupGatewayNote": "Zalecane obrazy: caronc/apprise lub lscr.io/linuxserver/apprise-api. Uwaga: apprise-go to tylko CLI bez serwera HTTP — wymaga nakładki, zanim Wombill będzie mógł go wywołać.",
+            "setupGatewayNote": "Zalecane obrazy: caronc/apprise lub lscr.io/linuxserver/apprise-api. Uwaga: apprise-go to tylko CLI bez serwera HTTP — wymaga nakładki, zanim Platybill będzie mógł go wywołać.",
             "setupMinimalLabel": "1. Uruchom bramkę i ustaw minimum (.env)",
             "setupOptionalLabel": "2. Opcjonalnie: adresy docelowe lub zapisany klucz (.env)",
             "setupReachability": "Kontener backendu musi mieć dostęp do bramki — użyj adresu IP hosta lub wspólnej sieci Docker (localhost wskazuje na sam backend). Następnie użyj przycisku „Wyślij powiadomienie testowe” powyżej.",
@@ -462,7 +462,7 @@
         },
         "backup": {
             "title": "Kopia zapasowa",
-            "description": "Pobierz pełną kopię wszystkich danych Wombill jako plik JSON."
+            "description": "Pobierz pełną kopię wszystkich danych Platybill jako plik JSON."
         },
         "restore": {
             "title": "Przywracanie danych",

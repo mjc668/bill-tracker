@@ -135,16 +135,15 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-2">
           <Image
-            src="/wombill-logo.png"
-            alt="Wombill"
+            src="/platybill-logo.png"
+            alt="Platybill"
             width={80}
             height={80}
             className="rounded-2xl shadow-md"
             priority
           />
           <h1 className="text-2xl tracking-tight text-green-700 dark:text-green-500">
-            <span className="font-normal">Bill</span>
-            <span className="font-bold">Tracker</span>
+            <span className="font-normal">Platy</span><span className="font-bold">bill</span>
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {t("resetPasswordTitle")}

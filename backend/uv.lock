@@ -500,7 +500,7 @@ wheels = [
 ]
 
 [[package]]
-name = "wombill-backend"
+name = "platybill-backend"
 version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
