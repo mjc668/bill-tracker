@@ -6,13 +6,19 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="116" fill="url(#bg)"/>
-  <ellipse cx="256" cy="258" rx="168" ry="150" fill="#7b5b45"/>
-  <rect x="78" y="312" width="356" height="112" rx="54" fill="#4a565e"/>
-  <path d="M132 390q124 22 248 0" fill="none" stroke="#39434a" stroke-width="10" stroke-linecap="round"/>
-  <circle cx="228" cy="350" r="7" fill="#2f383e"/>
-  <circle cx="284" cy="350" r="7" fill="#2f383e"/>
-  <circle cx="196" cy="228" r="16" fill="#241a15"/>
-  <circle cx="316" cy="228" r="16" fill="#241a15"/>
-  <circle cx="201" cy="223" r="5" fill="#f5f1ee"/>
-  <circle cx="321" cy="223" r="5" fill="#f5f1ee"/>
+  <!-- flat paddle tail -->
+  <ellipse cx="390" cy="346" rx="88" ry="46" fill="#5f4433" transform="rotate(-14 390 346)"/>
+  <!-- body -->
+  <ellipse cx="286" cy="332" rx="156" ry="104" fill="#7b5b45"/>
+  <!-- head -->
+  <circle cx="172" cy="258" r="92" fill="#7b5b45"/>
+  <!-- duck bill -->
+  <rect x="28" y="268" width="164" height="62" rx="31" fill="#4a565e"/>
+  <path d="M44 312q62 16 132 4" fill="none" stroke="#39434a" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="70" cy="292" r="5" fill="#39434a"/>
+  <circle cx="106" cy="286" r="5" fill="#39434a"/>
+  <circle cx="84" cy="306" r="4" fill="#39434a"/>
+  <!-- eye -->
+  <circle cx="170" cy="234" r="14" fill="#241a15"/>
+  <circle cx="175" cy="228" r="5" fill="#f5f1ee"/>
 </svg>
