@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-off Postgres -> SQLite data migration for Hearthbill.
+"""One-off Postgres -> SQLite data migration for Wombill.
 
 Copies every application table with original primary keys, then reconciles
 row counts and money totals between source and target. The source is read
@@ -12,9 +12,9 @@ Usage (from backend/):
 
     uv run python scripts/migrate_postgres_to_sqlite.py \
         --source postgresql://user:pass@localhost:5432/paytracker \
-        --target ./hearthbill.db
+        --target ./wombill.db
 
-The target file must not exist yet (or be empty). Existing Hearthbill data is
+The target file must not exist yet (or be empty). Existing Wombill data is
 never merged: delete the file and re-run if a previous attempt failed.
 """
 
@@ -76,7 +76,7 @@ def check_target_is_fresh(target_path: Path) -> None:
     if target_path.exists() and target_path.stat().st_size > 0:
         raise SystemExit(
             f"Target {target_path} already exists and is not empty. "
-            "Hearthbill never merges data: delete the file and re-run."
+            "Wombill never merges data: delete the file and re-run."
         )
 
 
@@ -92,7 +92,7 @@ def check_source_revision(source_engine: Engine) -> None:
     if "alembic_version" not in inspector.get_table_names():
         raise SystemExit(
             "Source database has no alembic_version table — is this the "
-            "Hearthbill/Pay Tracker Postgres database?"
+            "Wombill/Pay Tracker Postgres database?"
         )
     with source_engine.connect() as conn:
         revision = conn.execute(
@@ -198,7 +198,7 @@ def main() -> None:
 
     reconcile(source_engine, target_engine)
     print(
-        f"\nDone. Move {target_path} to the container's /data volume and start Hearthbill."
+        f"\nDone. Move {target_path} to the container's /data volume and start Wombill."
     )
     print("Keep the source database until you have verified the new deployment.")
 

@@ -1,12 +1,12 @@
 services:
   app:
-    image: hearthbill:latest
+    image: wombill:latest
     build:
       context: .
       args:
         NEXT_PUBLIC_APP_VERSION: ${NEXT_PUBLIC_APP_VERSION:-dev}
         NEXT_PUBLIC_SESSION_HEARTBEAT_SECONDS: ${NEXT_PUBLIC_SESSION_HEARTBEAT_SECONDS:-180}
-    container_name: hearthbill
+    container_name: wombill
     restart: unless-stopped
     env_file: .env
     # Run as the image's unprivileged user: the entrypoint skips PUID/PGID
@@ -18,15 +18,15 @@ services:
       # (docker-compose.prod.yml) binds to 127.0.0.1 only, behind a proxy.
       - "3010:3010"
     volumes:
-      - hearthbill_data:/data
+      - wombill_data:/data
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
 
   demo-data:
-    image: hearthbill:latest
-    container_name: hearthbill-demo-data
+    image: wombill:latest
+    container_name: wombill-demo-data
     profiles: ["demo"]
     depends_on:
       app:
@@ -43,4 +43,4 @@ services:
       - no-new-privileges:true
 
 volumes:
-  hearthbill_data:
+  wombill_data:

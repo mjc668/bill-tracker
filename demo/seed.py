@@ -116,7 +116,7 @@ def main() -> None:
         print(f"Seed data file not found: {DATA_FILE}")
         sys.exit(1)
 
-    print("Hearthbill — demo seed")
+    print("Wombill — demo seed")
     print(f"Target: {BASE_URL}")
     print()
 

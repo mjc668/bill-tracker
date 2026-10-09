@@ -158,6 +158,6 @@ export const config = {
   matcher: [
     // /api/* is handled by the next.config rewrite (proxied straight to the
     // backend), so it must bypass the auth/CSP proxy entirely.
-    "/((?!api/|_next/static|_next/image|favicon.ico|manifest\\.webmanifest$|sw\\.js$|icon-(?:192|512)\\.png$|hearthbill-logo\\.(?:png|svg)$).*)",
+    "/((?!api/|_next/static|_next/image|favicon.ico|manifest\\.webmanifest$|sw\\.js$|icon-(?:192|512)\\.png$|wombill-logo\\.(?:png|svg)$).*)",
   ],
 };

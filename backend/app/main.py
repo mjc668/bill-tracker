@@ -42,7 +42,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Hearthbill API",
+    title="Wombill API",
     version="0.1.0",
     lifespan=lifespan,
     docs_url="/docs" if not settings.is_production else None,

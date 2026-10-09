@@ -1,6 +1,6 @@
-# Hearthbill
+# Wombill
 
-A self-hosted household bill tracking PWA. Define your recurring bills once, then each period's payment instances are generated automatically. Track what's paid from any device — phone, tablet, or desktop. Hearthbill's mascot is a wombat.
+A self-hosted household bill tracking PWA. Define your recurring bills once, then each period's payment instances are generated automatically. Track what's paid from any device — phone, tablet, or desktop. Wombill's mascot is a wombat.
 
 No third-party data sharing. No subscription. Runs as a single Docker container with all data in one SQLite file — no external database. Each user's data is fully isolated.
 
@@ -19,7 +19,7 @@ No third-party data sharing. No subscription. Runs as a single Docker container 
 ## What it does
 
 - **Multiple household users** — register separate accounts for each family member; every account's bills, payments, categories and settings are fully isolated.
-- **Recurring bills** — define a bill once: name, category, amount, currency, recurrence (weekly / every-N weeks, monthly / every-N months, yearly / every-N years, or one-off) with an optional occurrence limit. Hearthbill generates payment instances automatically each period.
+- **Recurring bills** — define a bill once: name, category, amount, currency, recurrence (weekly / every-N weeks, monthly / every-N months, yearly / every-N years, or one-off) with an optional occurrence limit. Wombill generates payment instances automatically each period.
 - **Payment ledger** — mark a payment as paid with partial amounts, an actual payment date, and a note; over/underpayments are visible against the expected amount, and reverting a payment removes it.
 - **Archive, unarchive, never delete** — archiving a template hides it from active views while preserving its payment history; unarchiving resumes it like an active bill (the current period's payments are generated, past-due included) without backfilling earlier periods.
 - **Dashboard** — rolling windows with overdue aging, bills-vs-payments chart, upcoming forecast, and category breakdown.
@@ -38,9 +38,9 @@ No third-party data sharing. No subscription. Runs as a single Docker container 
 Pull the published image from GitHub Container Registry and run the app with just two files — no repo clone required.
 
 ```bash
-mkdir hearthbill && cd hearthbill
-curl -O https://raw.githubusercontent.com/mjc668/hearthbill/main/docker-compose.prod.yml
-curl -O https://raw.githubusercontent.com/mjc668/hearthbill/main/.env.example
+mkdir wombill && cd wombill
+curl -O https://raw.githubusercontent.com/mjc668/wombill/main/docker-compose.prod.yml
+curl -O https://raw.githubusercontent.com/mjc668/wombill/main/.env.example
 cp .env.example .env
 docker compose -f docker-compose.prod.yml up -d
 ```
@@ -50,7 +50,7 @@ docker compose -f docker-compose.prod.yml up -d
 
 `JWT_SECRET` may be left empty: a strong secret is generated on first start and persisted at `/data/jwt_secret`, so sessions survive restarts. Set it explicitly only to keep an existing secret (e.g. after migrating). For a public deployment, set `ENVIRONMENT=production` and put TLS in front (see [Deployment](context/foundation/infrastructure.md#https--pwa-deployment)).
 
-The compose file defaults to `HEARTHBILL_TAG=latest` (rolling builds from green `main` commits). To pin a specific build, set `HEARTHBILL_TAG=sha-<7>` in `.env` — the current commit is shown in the app footer.
+The compose file defaults to `WOMBILL_TAG=latest` (rolling builds from green `main` commits). To pin a specific build, set `WOMBILL_TAG=sha-<7>` in `.env` — the current commit is shown in the app footer.
 
 To try it with pre-seeded demo data instead of starting empty:
 
@@ -63,7 +63,7 @@ Demo login: `demo@demo.com` / `demo1234`.
 
 ## Getting started
 
-The steps below build the image from source — use this if you're developing Hearthbill or want to run unreleased changes. If you just want to run the app, see [Quick start without cloning](#quick-start-without-cloning) above.
+The steps below build the image from source — use this if you're developing Wombill or want to run unreleased changes. If you just want to run the app, see [Quick start without cloning](#quick-start-without-cloning) above.
 
 ### 1. Set up environment
 
@@ -88,7 +88,7 @@ Open http://localhost:3010 and register. Each account is isolated — register s
 
 ### 4. Add your first bill
 
-Go to **Bills → New Bill**. Fill in the name, category, amount, recurrence, and due date. Save it — Hearthbill will generate this period's payment instance automatically.
+Go to **Bills → New Bill**. Fill in the name, category, amount, recurrence, and due date. Save it — Wombill will generate this period's payment instance automatically.
 
 ### 5. Track payments
 
@@ -107,13 +107,13 @@ The settings page also shows the current server time so you can set send times r
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `HEARTHBILL_TAG` | no (prod compose) | Image tag to run: `latest` (default, rolling) or a pinned `sha-<7>` build |
+| `WOMBILL_TAG` | no (prod compose) | Image tag to run: `latest` (default, rolling) or a pinned `sha-<7>` build |
 | `JWT_SECRET` | no | JWT signing secret. Leave empty to auto-generate and persist at `/data/jwt_secret`; set it to keep an existing secret |
 | `ENVIRONMENT` | no | `development` (default) or `production` — production disables API docs and rejects a weak/default JWT secret |
 | `COOKIE_SECURE` | no | Set `true` when serving over HTTPS; over plain HTTP browsers reject Secure cookies and login bounces |
 | `TRUST_PROXY` | no | Set `true` behind a reverse proxy so rate limiting uses the real client IP from `X-Forwarded-For` (default `true`) |
 | `APP_BASE_URL` | no | Public URL of the app, used in password-reset links (default `http://localhost:3010`) |
-| `DATABASE_URL` | no | Optional override; defaults to `sqlite:////data/hearthbill.db` |
+| `DATABASE_URL` | no | Optional override; defaults to `sqlite:////data/wombill.db` |
 | `TZ` | no | Time zone for the scheduler and logs, e.g. `Europe/Warsaw` (`Etc/UTC` default) |
 | `PUID` / `PGID` | no | Unraid/root starts only: file owner for `/data` (CA template uses 99/100; compose runs as 10001) |
 | `NEXT_PUBLIC_APP_VERSION` | no | Build-time version label shown in the footer (CI bakes `sha-<7>`; local default `dev`) |
@@ -140,7 +140,7 @@ Copy `.env.example` to `.env`. Never commit `.env`.
 
 - **Frontend:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, next-intl
 - **Backend:** FastAPI, Python 3.13, SQLAlchemy 2.0, Alembic, Pydantic v2
-- **Database:** SQLite (WAL) at `/data/hearthbill.db` — no database server
+- **Database:** SQLite (WAL) at `/data/wombill.db` — no database server
 - **Runtime:** one all-in-one Docker image (Next standalone + uvicorn under supervisord), one port `3010`, one volume `/data`
 
 
@@ -182,7 +182,7 @@ cd backend && uv run alembic upgrade head
 
 ## Updating
 
-Images are published from every green `main` commit. `latest` and `main` roll forward; `sha-<7>` tags are immutable. Set `HEARTHBILL_TAG` in `.env` to pin a build (recommended for stability), then pull and recreate:
+Images are published from every green `main` commit. `latest` and `main` roll forward; `sha-<7>` tags are immutable. Set `WOMBILL_TAG` in `.env` to pin a build (recommended for stability), then pull and recreate:
 
 ```bash
 docker compose -f docker-compose.prod.yml pull
@@ -191,30 +191,30 @@ docker compose -f docker-compose.prod.yml up -d
 
 The deployed commit is shown in the footer (bottom-right). Database migrations run automatically on start; the entrypoint first writes a pre-migration snapshot to `/data/backups/pre-upgrade-<timestamp>.db` (keeps `BACKUP_KEEP`, default 10).
 
-**Rollback:** set `HEARTHBILL_TAG` to a previous `sha-<7>` tag and recreate. If the newer build had already run a migration, restore the matching pre-upgrade `.db` from `/data/backups` before starting the old image.
+**Rollback:** set `WOMBILL_TAG` to a previous `sha-<7>` tag and recreate. If the newer build had already run a migration, restore the matching pre-upgrade `.db` from `/data/backups` before starting the old image.
 
-Unraid users can use the Docker tab's force-update instead (the template tracks `ghcr.io/mjc668/hearthbill`).
+Unraid users can use the Docker tab's force-update instead (the template tracks `ghcr.io/mjc668/wombill`).
 
 
 ## Migrating from the Postgres deployment (3.1.x)
 
-Hearthbill replaces the old PostgreSQL-backed deployment with a single SQLite file. A one-off ETL copies all data (original IDs preserved) and verifies row counts and money totals. The source Postgres must be at alembic revision `b9c0d1e2f3a4` (the 3.1.x head) — run the old stack once so migrations finish, if needed.
+Wombill replaces the old PostgreSQL-backed deployment with a single SQLite file. A one-off ETL copies all data (original IDs preserved) and verifies row counts and money totals. The source Postgres must be at alembic revision `b9c0d1e2f3a4` (the 3.1.x head) — run the old stack once so migrations finish, if needed.
 
 ```bash
 cd backend
 uv run python scripts/migrate_postgres_to_sqlite.py \
   --source postgresql://user:pass@host:5432/paytracker \
-  --target ./hearthbill.db
+  --target ./wombill.db
 ```
 
-The script refuses a non-empty target, so delete `hearthbill.db` and re-run if a previous attempt failed. Copy the finished file into the container's `/data` volume before first start (e.g. `/mnt/user/appdata/hearthbill/hearthbill.db` on Unraid), then start Hearthbill. Keep the source database until you have verified the new deployment.
+The script refuses a non-empty target, so delete `wombill.db` and re-run if a previous attempt failed. Copy the finished file into the container's `/data` volume before first start (e.g. `/mnt/user/appdata/wombill/wombill.db` on Unraid), then start Wombill. Keep the source database until you have verified the new deployment.
 
-**Sign in once after migrating:** the JWT issuer/audience were renamed to `hearthbill*`, so existing sessions are invalidated. All other data carries over. You may set `JWT_SECRET` to the old value to keep a stable secret for the future.
+**Sign in once after migrating:** the JWT issuer/audience were renamed to `wombill*`, so existing sessions are invalidated. All other data carries over. You may set `JWT_SECRET` to the old value to keep a stable secret for the future.
 
 
 ## Backups
 
-- **Host-side snapshot** — `infra/backup.sh` takes a WAL-safe SQLite snapshot via the SQLite backup API inside the running container, streams it to the host as `backups/hearthbill-<timestamp>.db.gz`, and prunes files older than `BACKUP_KEEP_DAYS` (default 30). Never copy `/data/hearthbill.db` while the app is running.
+- **Host-side snapshot** — `infra/backup.sh` takes a WAL-safe SQLite snapshot via the SQLite backup API inside the running container, streams it to the host as `backups/wombill-<timestamp>.db.gz`, and prunes files older than `BACKUP_KEEP_DAYS` (default 30). Never copy `/data/wombill.db` while the app is running.
 - **Pre-migration snapshots** — taken automatically on every container start before `alembic upgrade head`, stored in `/data/backups`, newest `BACKUP_KEEP` kept.
 - **XLSX** — Payments page → Export Excel. One sheet per month, all columns.
 - **JSON backup** — Settings → Download Backup. Full data export scoped to your account.
@@ -223,24 +223,24 @@ The script refuses a non-empty target, so delete `hearthbill.db` and re-run if a
 
 ## Unraid / Community Applications
 
-An Unraid Community Applications template is prepared in this repo (`templates/hearthbill.xml`, with the CA profile at `ca_profile.xml`) but is **not yet submitted to the CA catalogue** — the maintainer wants the container tested first. It will be submitted once that is done; this README will be updated when it is listed.
+An Unraid Community Applications template is prepared in this repo (`templates/wombill.xml`, with the CA profile at `ca_profile.xml`) but is **not yet submitted to the CA catalogue** — the maintainer wants the container tested first. It will be submitted once that is done; this README will be updated when it is listed.
 
 The prepared template configures:
 
-- Repository `ghcr.io/mjc668/hearthbill:latest` (or pin a `sha-<7>` tag)
+- Repository `ghcr.io/mjc668/wombill:latest` (or pin a `sha-<7>` tag)
 - Port `3010`
-- `/data` → `/mnt/user/appdata/hearthbill`
+- `/data` → `/mnt/user/appdata/wombill`
 - PUID `99` / PGID `100`, plus `TZ`
 - `ENVIRONMENT=production`, `COOKIE_SECURE`, `APP_BASE_URL`, `TRUST_PROXY=true`
 
 HTTPS via [SWAG](https://docs.linuxserver.io/general/swag/) (or another reverse proxy) is recommended: PWA installation and secure cookies need it.
 
-Once listed, installation is: **Apps → search "Hearthbill"** → fill in port, paths, PUID/PGID and TZ → Install. Docker Hub alternatives or manual `docker run` are not the supported path — use the GHCR image above.
+Once listed, installation is: **Apps → search "Wombill"** → fill in port, paths, PUID/PGID and TZ → Install. Docker Hub alternatives or manual `docker run` are not the supported path — use the GHCR image above.
 
 
 ## Installing as a PWA
 
-- **Chrome / Brave (desktop):** install icon (⊕) in the address bar, or browser menu → Install Hearthbill
+- **Chrome / Brave (desktop):** install icon (⊕) in the address bar, or browser menu → Install Wombill
 - **Android:** browser menu (⋮) → Add to Home screen
 - **iOS Safari:** Share (⎋) → Add to Home Screen
 
@@ -249,6 +249,6 @@ Requires HTTPS in production. Localhost works as an exception in most browsers.
 
 ## Credits
 
-Hearthbill is a fork, rework and extension of **Pay Tracker** by Mariusz Winiarz — https://github.com/marwin87/pay-tracker — released under the MIT License. Thanks for the original concept and implementation. The Hearthbill rebrand and single-container/SQLite rearchitecture are by Michael Carlile.
+Wombill is a fork, rework and extension of **Pay Tracker** by Mariusz Winiarz — https://github.com/marwin87/pay-tracker — released under the MIT License. Thanks for the original concept and implementation. The Wombill rebrand and single-container/SQLite rearchitecture are by Michael Carlile.
 
 This project adds the payment ledger, editable categories, generalized recurrence, dashboard/statistics, Apprise notifications, and other changes. The upstream MIT notice and the modifications notice are preserved in [LICENSE](LICENSE). If you use this software in a public-facing application, a clear link or attribution back to the original project is appreciated.

@@ -1,6 +1,6 @@
 # Demo Seed Data
 
-This folder contains a seed script that populates Hearthbill with realistic demo data — useful for testing, screenshots, or showing the app to someone for the first time.
+This folder contains a seed script that populates Wombill with realistic demo data — useful for testing, screenshots, or showing the app to someone for the first time.
 
 ## What it creates
 

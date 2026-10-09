@@ -1,7 +1,7 @@
 services:
   app:
-    image: ghcr.io/mjc668/hearthbill:${HEARTHBILL_TAG:-latest}
-    container_name: hearthbill
+    image: ghcr.io/mjc668/wombill:${WOMBILL_TAG:-latest}
+    container_name: wombill
     restart: unless-stopped
     env_file: .env
     # Locked-down compose path: the image's unprivileged user (10001) owns a
@@ -14,15 +14,15 @@ services:
       # /api — the container proxies /api internally.
       - "127.0.0.1:3010:3010"
     volumes:
-      - hearthbill_data:/data
+      - wombill_data:/data
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
 
   demo-data:
-    image: ghcr.io/mjc668/hearthbill:${HEARTHBILL_TAG:-latest}
-    container_name: hearthbill-demo-data
+    image: ghcr.io/mjc668/wombill:${WOMBILL_TAG:-latest}
+    container_name: wombill-demo-data
     profiles: ["demo"]
     depends_on:
       app:
@@ -38,4 +38,4 @@ services:
       - no-new-privileges:true
 
 volumes:
-  hearthbill_data:
+  wombill_data:

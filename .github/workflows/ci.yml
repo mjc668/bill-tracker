@@ -175,7 +175,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           build-args: |
             NEXT_PUBLIC_APP_VERSION=sha-${{ env.SHORT_SHA }}
-          outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/hearthbill,push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/wombill,push-by-digest=true,name-canonical=true,push=true
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -230,11 +230,11 @@ jobs:
         run: |
           # shellcheck disable=SC2046  # word splitting is intended here
           docker buildx imagetools create \
-            -t ghcr.io/${{ github.repository_owner }}/hearthbill:sha-${{ env.SHORT_SHA }} \
-            -t ghcr.io/${{ github.repository_owner }}/hearthbill:main \
-            -t ghcr.io/${{ github.repository_owner }}/hearthbill:latest \
-            $(printf 'ghcr.io/${{ github.repository_owner }}/hearthbill@sha256:%s ' *)
+            -t ghcr.io/${{ github.repository_owner }}/wombill:sha-${{ env.SHORT_SHA }} \
+            -t ghcr.io/${{ github.repository_owner }}/wombill:main \
+            -t ghcr.io/${{ github.repository_owner }}/wombill:latest \
+            $(printf 'ghcr.io/${{ github.repository_owner }}/wombill@sha256:%s ' *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ghcr.io/${{ github.repository_owner }}/hearthbill:sha-${{ env.SHORT_SHA }}
+          docker buildx imagetools inspect ghcr.io/${{ github.repository_owner }}/wombill:sha-${{ env.SHORT_SHA }}

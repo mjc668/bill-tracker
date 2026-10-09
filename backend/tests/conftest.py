@@ -45,7 +45,7 @@ def sqlite_engine(tmp_path_factory):
     data without StaticPool tricks, and each test still starts from an empty
     schema via create_all/drop_all.
     """
-    db_path = tmp_path_factory.mktemp("hearthbill") / "test.db"
+    db_path = tmp_path_factory.mktemp("wombill") / "test.db"
     engine = create_engine(
         f"sqlite:///{db_path}",
         connect_args={"check_same_thread": False},

@@ -110,7 +110,7 @@ def export_xlsx(
                         cell.data_type = "s"
     buf.seek(0)
 
-    filename = f"hearthbill-{year}.xlsx"
+    filename = f"wombill-{year}.xlsx"
     return StreamingResponse(
         buf,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -214,7 +214,7 @@ def export_json(
         content=json.dumps(payload, indent=2),
         media_type="application/json",
         headers={
-            "Content-Disposition": f'attachment; filename="hearthbill-backup-{datetime.now(timezone.utc).date()}.json"'
+            "Content-Disposition": f'attachment; filename="wombill-backup-{datetime.now(timezone.utc).date()}.json"'
         },
     )
 

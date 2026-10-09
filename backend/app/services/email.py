@@ -42,62 +42,62 @@ _BODIES: dict[tuple[str, str], str] = {
     ("2_days_before", "en"): (
         "This is a reminder that {bill_name} is due in 2 days ({due_date}).\n"
         "Amount: {amount} {currency}\n\n"
-        "Manage your reminders in the Hearthbill app."
+        "Manage your reminders in the Wombill app."
     ),
     ("2_days_before", "pl"): (
         "Przypominamy, że {bill_name} jest płatne za 2 dni ({due_date}).\n"
         "Kwota: {amount} {currency}\n\n"
-        "Zarządzaj przypomnieniami w aplikacji Hearthbill."
+        "Zarządzaj przypomnieniami w aplikacji Wombill."
     ),
     ("2_days_before", "de"): (
         "Erinnerung: {bill_name} ist in 2 Tagen fällig ({due_date}).\n"
         "Betrag: {amount} {currency}\n\n"
-        "Verwalten Sie Ihre Erinnerungen in der Hearthbill App."
+        "Verwalten Sie Ihre Erinnerungen in der Wombill App."
     ),
     ("upcoming", "en"): (
         "This is a reminder that {bill_name} is due tomorrow ({due_date}).\n"
         "Amount: {amount} {currency}\n\n"
-        "Manage your reminders in the Hearthbill app."
+        "Manage your reminders in the Wombill app."
     ),
     ("upcoming", "pl"): (
         "Przypominamy, że {bill_name} jest płatne jutro ({due_date}).\n"
         "Kwota: {amount} {currency}\n\n"
-        "Zarządzaj przypomnieniami w aplikacji Hearthbill."
+        "Zarządzaj przypomnieniami w aplikacji Wombill."
     ),
     ("upcoming", "de"): (
         "Erinnerung: {bill_name} ist morgen fällig ({due_date}).\n"
         "Betrag: {amount} {currency}\n\n"
-        "Verwalten Sie Ihre Erinnerungen in der Hearthbill App."
+        "Verwalten Sie Ihre Erinnerungen in der Wombill App."
     ),
     ("on_day", "en"): (
         "{bill_name} is due today ({due_date}).\n"
         "Amount: {amount} {currency}\n\n"
-        "Manage your reminders in the Hearthbill app."
+        "Manage your reminders in the Wombill app."
     ),
     ("on_day", "pl"): (
         "{bill_name} jest płatne dzisiaj ({due_date}).\n"
         "Kwota: {amount} {currency}\n\n"
-        "Zarządzaj przypomnieniami w aplikacji Hearthbill."
+        "Zarządzaj przypomnieniami w aplikacji Wombill."
     ),
     ("on_day", "de"): (
         "{bill_name} ist heute fällig ({due_date}).\n"
         "Betrag: {amount} {currency}\n\n"
-        "Verwalten Sie Ihre Erinnerungen in der Hearthbill App."
+        "Verwalten Sie Ihre Erinnerungen in der Wombill App."
     ),
     ("1_day_after", "en"): (
         "{bill_name} was due yesterday ({due_date}) and remains unpaid.\n"
         "Amount: {amount} {currency}\n\n"
-        "Manage your reminders in the Hearthbill app."
+        "Manage your reminders in the Wombill app."
     ),
     ("1_day_after", "pl"): (
         "{bill_name} było płatne wczoraj ({due_date}) i nadal nie zostało opłacone.\n"
         "Kwota: {amount} {currency}\n\n"
-        "Zarządzaj przypomnieniami w aplikacji Hearthbill."
+        "Zarządzaj przypomnieniami w aplikacji Wombill."
     ),
     ("1_day_after", "de"): (
         "{bill_name} war gestern fällig ({due_date}) und ist noch unbezahlt.\n"
         "Betrag: {amount} {currency}\n\n"
-        "Verwalten Sie Ihre Erinnerungen in der Hearthbill App."
+        "Verwalten Sie Ihre Erinnerungen in der Wombill App."
     ),
 }
 
@@ -161,9 +161,9 @@ def send_reminder_email(
 
 
 _SUMMARY_SUBJECTS: dict[str, str] = {
-    "en": "Monthly summary for {month_label} — Hearthbill",
-    "pl": "Miesięczne podsumowanie za {month_label} — Hearthbill",
-    "de": "Monatliche Zusammenfassung für {month_label} — Hearthbill",
+    "en": "Monthly summary for {month_label} — Wombill",
+    "pl": "Miesięczne podsumowanie za {month_label} — Wombill",
+    "de": "Monatliche Zusammenfassung für {month_label} — Wombill",
 }
 
 _SUMMARY_HEADINGS: dict[str, dict[str, str]] = {
@@ -181,7 +181,7 @@ _SUMMARY_HEADINGS: dict[str, dict[str, str]] = {
         "nothing_unpaid": "All bills are paid — great job!",
         "total_paid": "Total paid",
         "total_outstanding": "Total outstanding",
-        "footer": "Manage your bills in the Hearthbill app.",
+        "footer": "Manage your bills in the Wombill app.",
     },
     "pl": {
         "intro": "Oto podsumowanie płatności za {month_label}.",
@@ -197,7 +197,7 @@ _SUMMARY_HEADINGS: dict[str, dict[str, str]] = {
         "nothing_unpaid": "Wszystkie rachunki są opłacone — świetna robota!",
         "total_paid": "Łącznie zapłacono",
         "total_outstanding": "Łącznie do zapłaty",
-        "footer": "Zarządzaj rachunkami w aplikacji Hearthbill.",
+        "footer": "Zarządzaj rachunkami w aplikacji Wombill.",
     },
     "de": {
         "intro": "Hier ist Ihre Zahlungsübersicht für {month_label}.",
@@ -213,7 +213,7 @@ _SUMMARY_HEADINGS: dict[str, dict[str, str]] = {
         "nothing_unpaid": "Alle Rechnungen sind bezahlt — gut gemacht!",
         "total_paid": "Gesamt bezahlt",
         "total_outstanding": "Gesamt ausstehend",
-        "footer": "Verwalten Sie Ihre Rechnungen in der Hearthbill App.",
+        "footer": "Verwalten Sie Ihre Rechnungen in der Wombill App.",
     },
 }
 
@@ -414,26 +414,26 @@ def build_monthly_summary_text(
 
 
 _RESET_SUBJECTS: dict[str, str] = {
-    "en": "Reset your Hearthbill password",
-    "pl": "Zresetuj hasło Hearthbill",
-    "de": "Hearthbill Passwort zurücksetzen",
+    "en": "Reset your Wombill password",
+    "pl": "Zresetuj hasło Wombill",
+    "de": "Wombill Passwort zurücksetzen",
 }
 
 _RESET_BODIES: dict[str, str] = {
     "en": (
-        "You requested a password reset for your Hearthbill account.\n\n"
+        "You requested a password reset for your Wombill account.\n\n"
         "Click the link below to set a new password (valid for {expires_label}):\n"
         "{reset_url}\n\n"
         "If you did not request this, you can ignore this email — your password will not change."
     ),
     "pl": (
-        "Zostało złożone żądanie zresetowania hasła do konta Hearthbill.\n\n"
+        "Zostało złożone żądanie zresetowania hasła do konta Wombill.\n\n"
         "Kliknij poniższy link, aby ustawić nowe hasło (ważny przez {expires_label}):\n"
         "{reset_url}\n\n"
         "Jeśli nie prosiłeś o reset hasła, zignoruj tę wiadomość — Twoje hasło pozostanie bez zmian."
     ),
     "de": (
-        "Sie haben eine Passwortzurücksetzung für Ihr Hearthbill-Konto angefordert.\n\n"
+        "Sie haben eine Passwortzurücksetzung für Ihr Wombill-Konto angefordert.\n\n"
         "Klicken Sie auf den folgenden Link, um ein neues Passwort festzulegen (gültig für {expires_label}):\n"
         "{reset_url}\n\n"
         "Falls Sie diese Anforderung nicht gestellt haben, können Sie diese E-Mail ignorieren — Ihr Passwort bleibt unverändert."
@@ -519,22 +519,22 @@ def send_monthly_summary_email(
 
 
 _TEST_SUBJECTS: dict[str, str] = {
-    "en": "Hearthbill test notification",
-    "pl": "Powiadomienie testowe Hearthbill",
-    "de": "Hearthbill Testbenachrichtigung",
+    "en": "Wombill test notification",
+    "pl": "Powiadomienie testowe Wombill",
+    "de": "Wombill Testbenachrichtigung",
 }
 
 _TEST_BODIES: dict[str, str] = {
     "en": (
-        "This is a test notification from Hearthbill. "
+        "This is a test notification from Wombill. "
         "If you received it, email notifications are working."
     ),
     "pl": (
-        "To jest powiadomienie testowe z Hearthbill. "
+        "To jest powiadomienie testowe z Wombill. "
         "Jeśli je otrzymałeś, powiadomienia e-mail działają."
     ),
     "de": (
-        "Dies ist eine Testbenachrichtigung von Hearthbill. "
+        "Dies ist eine Testbenachrichtigung von Wombill. "
         "Wenn Sie sie erhalten haben, funktionieren die E-Mail-Benachrichtigungen."
     ),
 }

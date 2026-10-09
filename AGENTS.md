@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-Hearthbill is a household bill-tracking PWA. Stack: Next.js 16 (App Router, TypeScript, Tailwind) frontend + FastAPI (Python 3.13) backend in a single all-in-one Docker image (Next standalone + uvicorn under supervisord), with SQLite at `/data/hearthbill.db` (WAL). The browser calls `/api/*` same-origin; the Next server proxies to uvicorn on `127.0.0.1:8010` inside the container. There is no Postgres service.
+Wombill is a household bill-tracking PWA. Stack: Next.js 16 (App Router, TypeScript, Tailwind) frontend + FastAPI (Python 3.13) backend in a single all-in-one Docker image (Next standalone + uvicorn under supervisord), with SQLite at `/data/wombill.db` (WAL). The browser calls `/api/*` same-origin; the Next server proxies to uvicorn on `127.0.0.1:8010` inside the container. There is no Postgres service.
 
 ## Hard Rules
 
@@ -32,13 +32,13 @@ See `@context/foundation/prd.md` for domain rules and `@context/foundation/tech-
 - `docker compose --profile demo up --build` — same, seeded with demo data (`demo@demo.com` / `demo1234`)
 - `docker compose down -v && docker compose up --build` — clean start, wipes the SQLite volume
 - `cd frontend && API_PREFIX=/api npm run dev` — frontend only, no Docker (the `/api` rewrite targets `127.0.0.1:8010`; without `API_PREFIX=/api` the browser-side client would call the backend path without the `/api` prefix and miss the rewrite)
-- `cd backend && DATABASE_URL=sqlite:///./dev.db uv run uvicorn app.main:app --reload` — backend only, no Docker (without the override the default `/data/hearthbill.db` path is not writable on most dev machines)
+- `cd backend && DATABASE_URL=sqlite:///./dev.db uv run uvicorn app.main:app --reload` — backend only, no Docker (without the override the default `/data/wombill.db` path is not writable on most dev machines)
 - `cd frontend && npm run lint` — ESLint
 - `cd frontend && npm run lint && npm run build` — full frontend check
 - `cd backend && uv run pytest` — backend tests
 - `cd backend && uv run alembic revision --autogenerate -m "<desc>"` — new migration (hand-review, then `upgrade head`)
 
-API docs (development only): `http://localhost:3010/api/docs` via the container, or `http://localhost:8010/docs` with the split backend. Images publish to `ghcr.io/mjc668/hearthbill` from green `main` commits with tags `sha-<7>`, `main`, and `latest`; there are no GitHub Releases or version numbers (the footer shows the deployed commit).
+API docs (development only): `http://localhost:3010/api/docs` via the container, or `http://localhost:8010/docs` with the split backend. Images publish to `ghcr.io/mjc668/wombill` from green `main` commits with tags `sha-<7>`, `main`, and `latest`; there are no GitHub Releases or version numbers (the footer shows the deployed commit).
 
 ## Coding Style & Conventions
 

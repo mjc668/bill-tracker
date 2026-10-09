@@ -1,6 +1,6 @@
 # Security Policy
 
-Hearthbill is a self-hosted household application maintained by a small team.
+Wombill is a self-hosted household application maintained by a small team.
 We take security reports seriously and appreciate responsible disclosure.
 
 ## Reporting a vulnerability
@@ -22,7 +22,7 @@ Please include:
 
 ## Scope
 
-**In scope:** the Hearthbill application in this repository — frontend, backend,
+**In scope:** the Wombill application in this repository — frontend, backend,
 the all-in-one Docker image, compose files, backup/restore scripts, and the CI
 workflows.
 
@@ -33,7 +33,7 @@ resource-exhaustion denial of service, social engineering, and physical attacks.
 
 ## Supported versions
 
-Hearthbill has no versioned releases: every green commit on `main` is published
+Wombill has no versioned releases: every green commit on `main` is published
 as an immutable `sha-<7>` image tag, and `main`/`latest` roll forward to the
 newest build. Only the **newest build** receives security fixes — upgrade to the
 latest tag (or re-pull the tag you follow) to stay supported.

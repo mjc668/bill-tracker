@@ -500,7 +500,7 @@ wheels = [
 ]
 
 [[package]]
-name = "hearthbill-backend"
+name = "wombill-backend"
 version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
