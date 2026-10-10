@@ -434,7 +434,7 @@ None.
 
 Operational follow-ups (not code slices):
 
-- **Publish and submit.** Push `main` so CI publishes `ghcr.io/mjc668/platybill` (`sha-<7>`/`main`/`latest`), make the GHCR package public, test-install on Unraid from `templates/platybill.xml`, then open the forum support thread and submit to the CA catalogue.
+- **Finish the Unraid rollout.** The image is published (`ghcr.io/mjc668/platybill`, tags `sha-<7>`/`main`/`latest`) and the GHCR package is public. Remaining: test-install on the Unraid server from `templates/platybill.xml`, open the forum support thread, and submit to the CA catalogue.
 - **Migrate the live Postgres deployment to SQLite.** Run `backend/scripts/migrate_postgres_to_sqlite.py` against the 3.1.x database (source must be at alembic head `b9c0d1e2f3a4`), copy the resulting `platybill.db` into `/data`, and restart. Expect one forced sign-in (JWT issuer/audience renamed to `platybill*`). See README § Migrating from the Postgres deployment.
 - **Install apprise-go, configure it, and connect it to Platybill.**
   1. **Install** apprise-go on the host (container or binary). It is CLI-only with no HTTP server, so it needs a small HTTP wrapper for Platybill to call — or run `caronc/apprise` / `lscr.io/linuxserver/apprise-api` as the gateway instead.
