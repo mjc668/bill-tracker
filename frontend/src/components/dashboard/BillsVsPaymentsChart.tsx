@@ -174,7 +174,7 @@ export default function BillsVsPaymentsChart({ trend, forecast, currency }: Prop
                   width={barWidth}
                   height={barHeight(paid)}
                   rx={2}
-                  className="fill-emerald-500"
+                  className="fill-blue-500"
                 >
                   <title>{tooltip(point.period, t("trendPaid"), paid)}</title>
                 </rect>
@@ -227,7 +227,7 @@ export default function BillsVsPaymentsChart({ trend, forecast, currency }: Prop
           {t("trendDue")}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-blue-500" />
           {t("trendPaid")}
         </span>
         <span

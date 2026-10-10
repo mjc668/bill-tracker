@@ -98,7 +98,7 @@ export function Tile({
               <button
                 onClick={onSave}
                 disabled={isSaving}
-                className="rounded-lg border border-green-700 bg-green-700 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:border-green-800 hover:bg-green-800 disabled:opacity-50"
+                className="rounded-lg border border-blue-700 bg-blue-700 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:border-blue-800 hover:bg-blue-800 disabled:opacity-50"
               >
                 {isSaving ? t("saving") : t("save")}
               </button>

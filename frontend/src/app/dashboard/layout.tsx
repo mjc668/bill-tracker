@@ -9,7 +9,6 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/auth-context";
 import { fetchMe } from "@/lib/user-api";
 import ThemeToggle from "@/components/ThemeToggle";
-import LanguageToggle from "@/components/LanguageToggle";
 
 const NAV_ITEMS = [
   { href: "/dashboard", labelKey: "dashboard" as const, icon: LayoutDashboard, exact: true },
@@ -80,7 +79,7 @@ export default function DashboardLayout({
           {/* Brand */}
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 text-green-700 transition-opacity hover:opacity-80 dark:text-green-500"
+            className="flex items-center gap-2 text-blue-700 transition-opacity hover:opacity-80 dark:text-blue-500"
           >
             <Image src="/platybill-logo.png" alt="Platybill" width={32} height={32} className="rounded-xl" />
             <span className="text-lg tracking-tight">
@@ -98,8 +97,8 @@ export default function DashboardLayout({
                   href={href}
                   className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
                     active
-                      ? "border border-green-200 bg-green-50 text-green-800 shadow-sm dark:border-green-800 dark:bg-green-900/30 dark:text-green-300"
-                      : "border border-transparent text-slate-600 hover:border-green-200 hover:bg-green-50 hover:text-green-700 dark:text-slate-400 dark:hover:border-emerald-800 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
+                      ? "border border-blue-200 bg-blue-50 text-blue-800 shadow-sm dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                      : "border border-transparent text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:text-slate-400 dark:hover:border-blue-800 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
                   }`}
                 >
                   <Icon size={15} />
@@ -111,7 +110,6 @@ export default function DashboardLayout({
 
           {/* Desktop right side */}
           <div className="hidden md:flex items-center gap-1 ml-auto">
-            <LanguageToggle />
             <ThemeToggle />
 
             {/* Avatar + dropdown */}
@@ -121,8 +119,8 @@ export default function DashboardLayout({
                 aria-label={t("userMenu")}
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm transition-all ${
                   userMenuOpen
-                    ? "bg-green-800 dark:bg-green-500"
-                    : "bg-green-700 hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-500"
+                    ? "bg-blue-800 dark:bg-blue-500"
+                    : "bg-blue-700 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500"
                 }`}
               >
                 {initials}
@@ -155,7 +153,6 @@ export default function DashboardLayout({
 
           {/* Mobile: utility icons + hamburger */}
           <div className="flex md:hidden items-center gap-1 ml-auto">
-            <LanguageToggle />
             <button
               onClick={() => setMenuOpen((o) => !o)}
               aria-label="Toggle menu"
@@ -172,7 +169,7 @@ export default function DashboardLayout({
                   {/* Signed-in email header */}
                   {userEmail && (
                     <div className="mb-2 flex items-center gap-2.5 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-700/50">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-700 text-xs font-bold text-white dark:bg-green-600">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xs font-bold text-white dark:bg-blue-600">
                         {initials}
                       </div>
                       <span className="truncate text-sm text-slate-600 dark:text-slate-300">{userEmail}</span>
@@ -188,8 +185,8 @@ export default function DashboardLayout({
                         onClick={() => setMenuOpen(false)}
                         className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
                           active
-                            ? "border border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300"
-                            : "border border-transparent text-slate-600 hover:border-green-200 hover:bg-green-50 hover:text-green-700 dark:text-slate-400 dark:hover:border-emerald-800 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
+                            ? "border border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                            : "border border-transparent text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:text-slate-400 dark:hover:border-blue-800 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
                         }`}
                       >
                         <Icon size={16} />

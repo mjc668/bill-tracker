@@ -111,10 +111,10 @@ export default function SummaryCards({
 
       <div
         data-testid="summary-paid"
-        className="rounded-xl border border-slate-200 border-l-4 border-l-emerald-400 bg-white p-4 shadow-sm dark:border-slate-700 dark:border-l-emerald-500 dark:bg-slate-800"
+        className="rounded-xl border border-slate-200 border-l-4 border-l-blue-400 bg-white p-4 shadow-sm dark:border-slate-700 dark:border-l-blue-500 dark:bg-slate-800"
       >
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400">
+          <div className="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400">
             <CheckCircle2 size={18} />
           </div>
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -136,7 +136,7 @@ export default function SummaryCards({
           className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700"
         >
           <div
-            className="h-full rounded-full bg-emerald-500"
+            className="h-full rounded-full bg-blue-500"
             style={{ width: `${paidPercent}%` }}
           />
         </div>

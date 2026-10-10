@@ -20,7 +20,7 @@ export function Switch({ checked, onChange, label, disabled }: SwitchProps) {
           aria-checked={checked}
           className="sr-only peer"
         />
-        <div className="w-11 h-6 rounded-full border border-slate-200 bg-slate-100 dark:border-slate-600 dark:bg-slate-700 peer-checked:border-green-600 peer-checked:bg-green-600 dark:peer-checked:border-green-500 dark:peer-checked:bg-green-500 peer-focus-visible:ring-2 peer-focus-visible:ring-green-500 peer-focus-visible:ring-offset-2 transition-all peer-disabled:opacity-50" />
+        <div className="w-11 h-6 rounded-full border border-slate-200 bg-slate-100 dark:border-slate-600 dark:bg-slate-700 peer-checked:border-blue-600 peer-checked:bg-blue-600 dark:peer-checked:border-blue-500 dark:peer-checked:bg-blue-500 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-2 transition-all peer-disabled:opacity-50" />
         <div className="absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5 peer-disabled:opacity-50" />
       </div>
       <span className="text-sm font-medium text-slate-700 dark:text-slate-300 select-none">

@@ -67,7 +67,7 @@ export default function CategoryBars({ categories, currency }: Props) {
                 {categoryLabel(item.category, tRoot)}
               </span>
               <span className="flex shrink-0 items-baseline gap-3 text-xs tabular-nums text-slate-400 dark:text-slate-500">
-                <span className="text-emerald-600 dark:text-emerald-400">
+                <span className="text-blue-600 dark:text-blue-400">
                   {t("categoryPaid", {
                     amount: `${amountFormatter.format(paid)} ${currency}`,
                   })}
@@ -85,7 +85,7 @@ export default function CategoryBars({ categories, currency }: Props) {
                 style={{ width: `${duePct}%` }}
               />
               <div
-                className="absolute inset-y-0 left-0 rounded-full bg-emerald-500"
+                className="absolute inset-y-0 left-0 rounded-full bg-blue-500"
                 style={{ width: `${paidPct}%` }}
               />
             </div>

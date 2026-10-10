@@ -62,7 +62,7 @@ export default function MiniCalendar({ month, instances, todayStr }: Props) {
       href={`/dashboard/payments?month=${month}`}
       data-testid="dashboard-mini-calendar"
       aria-label={t("miniCalendarLinkLabel", { month: capitalizedMonthLabel })}
-      className="block rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition-colors hover:border-green-300 hover:bg-green-50/50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/10"
+      className="block rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50/50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-700 dark:hover:bg-blue-900/10"
     >
       <div className="mb-2">
         <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -95,13 +95,13 @@ export default function MiniCalendar({ month, instances, todayStr }: Props) {
               key={key}
               data-testid={`mini-calendar-day-${key}`}
               className={`flex min-h-[38px] flex-col items-center gap-0.5 rounded-lg px-0.5 py-1 ${
-                isToday ? "bg-green-50 dark:bg-emerald-900/20" : ""
+                isToday ? "bg-blue-50 dark:bg-blue-900/20" : ""
               }`}
             >
               <span
                 className={`flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums ${
                   isToday
-                    ? "bg-green-700 text-white dark:bg-emerald-600"
+                    ? "bg-blue-700 text-white dark:bg-blue-600"
                     : "text-slate-600 dark:text-slate-300"
                 }`}
               >

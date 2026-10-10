@@ -104,7 +104,7 @@ const SECTION_LABEL_KEYS = {
 const SECTION_TITLE_CLASS: Record<SectionKey, string> = {
   overdue: "text-red-500 dark:text-red-400",
   upcoming: "text-slate-400 dark:text-slate-500",
-  paid: "text-emerald-600 dark:text-emerald-400",
+  paid: "text-blue-600 dark:text-blue-400",
 };
 
 export default function PaymentsPage() {
@@ -325,7 +325,7 @@ function PaymentsPageInner() {
             onClick={() => setView("list")}
             className={`flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-sm font-medium transition-colors ${
               view === "list"
-                ? "bg-green-700 text-white shadow-sm"
+                ? "bg-blue-700 text-white shadow-sm"
                 : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
@@ -338,7 +338,7 @@ function PaymentsPageInner() {
             onClick={() => setView("calendar")}
             className={`flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-sm font-medium transition-colors ${
               view === "calendar"
-                ? "bg-green-700 text-white shadow-sm"
+                ? "bg-blue-700 text-white shadow-sm"
                 : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
@@ -387,19 +387,19 @@ function PaymentsPageInner() {
                   onClick={() => setSelectedMonth(key)}
                   className={`relative flex flex-1 flex-col items-center gap-1 pb-2.5 pt-2 text-sm font-medium transition-colors focus:outline-none ${
                     isSelected
-                      ? "text-green-700 dark:text-emerald-400"
+                      ? "text-blue-700 dark:text-blue-400"
                       : isPast
                       ? "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                   }`}
                 >
                   {isCurrent && (
-                    <span className="absolute top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-green-500 dark:bg-emerald-400" />
+                    <span className="absolute top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-blue-500 dark:bg-blue-400" />
                   )}
                   {getMonthLabel(selectedYear, i, locale)}
                   <span
                     className={`absolute bottom-0 left-1 right-1 h-0.5 rounded-full transition-all ${
-                      isSelected ? "bg-green-600 dark:bg-emerald-500" : "bg-transparent"
+                      isSelected ? "bg-blue-600 dark:bg-blue-500" : "bg-transparent"
                     }`}
                   />
                 </button>
@@ -413,10 +413,10 @@ function PaymentsPageInner() {
           <button
             onClick={() => handleExportXlsx(selectedYear)}
             disabled={xlsxLoadingYear !== null}
-            className="group flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 shadow-sm transition-all hover:border-green-300 hover:bg-green-50 hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
+            className="group flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
           >
             {xlsxLoadingYear === selectedYear ? (
-              <Loader2 size={15} className="animate-spin text-green-600 dark:text-emerald-400" />
+              <Loader2 size={15} className="animate-spin text-blue-600 dark:text-blue-400" />
             ) : (
               <Download size={15} className="transition-transform group-hover:-translate-y-0.5" />
             )}
@@ -501,7 +501,7 @@ function PaymentsPageInner() {
                     className="h-1.5 w-full overflow-hidden rounded bg-slate-100 dark:bg-slate-700"
                   >
                     <div
-                      className="h-full rounded bg-emerald-500"
+                      className="h-full rounded bg-blue-500"
                       style={{ width: `${paidPercent}%` }}
                     />
                   </div>
@@ -688,7 +688,7 @@ function PaymentsPageInner() {
           {!isReadOnly && (
             <Link
               href="/dashboard/bills"
-              className="mt-3 text-sm font-medium text-green-700 hover:underline dark:text-green-500"
+              className="mt-3 text-sm font-medium text-blue-700 hover:underline dark:text-blue-500"
             >
               {t("addBills")}
             </Link>

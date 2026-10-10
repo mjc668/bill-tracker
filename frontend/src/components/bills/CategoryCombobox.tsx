@@ -22,7 +22,7 @@ interface Props {
 }
 
 const fieldClass =
-  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-100 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:focus:border-green-600 dark:focus:ring-green-900/40";
+  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-900/40";
 
 export default function CategoryCombobox({
   id,
@@ -124,7 +124,7 @@ export default function CategoryCombobox({
             onClick={() => void submitAdd()}
             disabled={saving || draft.trim() === ""}
             aria-label={tc("addConfirm")}
-            className="shrink-0 rounded-xl border border-green-700 bg-green-700 p-2.5 text-white shadow-sm transition-all hover:border-green-800 hover:bg-green-800 disabled:opacity-50"
+            className="shrink-0 rounded-xl border border-blue-700 bg-blue-700 p-2.5 text-white shadow-sm transition-all hover:border-blue-800 hover:bg-blue-800 disabled:opacity-50"
           >
             {saving ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
           </button>

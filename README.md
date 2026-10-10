@@ -29,7 +29,6 @@ No third-party data sharing. No subscription. Runs as a single Docker container 
 - **JSON backup & restore** — full per-user backup and restore, with pre-restore snapshots so a mistaken restore can be undone.
 - **Email reminders + monthly summary** — optional scheduled reminders around each due date and a monthly paid/unpaid summary, delivered through an Apprise API gateway with SMTP as an optional fallback.
 - **Password reset** — optional. When SMTP is configured, a "Forgot password?" link appears on the login page. Users receive a secure one-time reset link by email (expires after 60 minutes by default).
-- **Multilingual** — English, Polish, German. Language is saved per account.
 - **Installable PWA** — installs on mobile and desktop. The service worker is network-only (no offline cache), so the app always loads current data and requires connectivity.
 
 

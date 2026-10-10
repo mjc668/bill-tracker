@@ -13,7 +13,7 @@ interface Props {
 }
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-100 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:focus:border-green-600 dark:focus:ring-green-900/40";
+  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-900/40";
 
 export default function GenerateInstancesDialog({ templates, onClose, onGenerated }: Props) {
   const t = useTranslations("BillsPage");
@@ -68,7 +68,7 @@ export default function GenerateInstancesDialog({ templates, onClose, onGenerate
         onKeyDown={(e) => e.key === "Escape" && !submitting && onClose()}
         className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:bg-slate-800 dark:border-slate-700"
       >
-        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
           <CalendarPlus size={22} />
         </div>
         <h2
@@ -119,7 +119,7 @@ export default function GenerateInstancesDialog({ templates, onClose, onGenerate
                       type="checkbox"
                       checked={selectedIds.has(tmpl.id)}
                       onChange={() => toggleId(tmpl.id)}
-                      className="h-4 w-4 shrink-0 rounded accent-green-700"
+                      className="h-4 w-4 shrink-0 rounded accent-blue-700"
                     />
                     <span className="flex-1 truncate">{tmpl.name}</span>
                     <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
@@ -133,7 +133,7 @@ export default function GenerateInstancesDialog({ templates, onClose, onGenerate
         ) : (
           <p
             role="status"
-            className="mb-5 rounded-xl bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400"
+            className="mb-5 rounded-xl bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
           >
             {t("generateDialog.created", { count: created })}
           </p>
@@ -157,7 +157,7 @@ export default function GenerateInstancesDialog({ templates, onClose, onGenerate
             <button
               onClick={handleGenerate}
               disabled={!canSubmit}
-              className="flex-1 rounded-xl border border-green-700 bg-green-700 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:border-green-800 hover:bg-green-800 disabled:opacity-50"
+              className="flex-1 rounded-xl border border-blue-700 bg-blue-700 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:border-blue-800 hover:bg-blue-800 disabled:opacity-50"
             >
               {submitting ? t("generateDialog.submitting") : t("generateDialog.submit")}
             </button>

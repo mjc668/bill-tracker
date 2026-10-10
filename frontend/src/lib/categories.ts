@@ -12,7 +12,7 @@ export const CATEGORY_BORDER_PALETTE: readonly string[] = [
   "border-l-slate-400 dark:border-l-slate-500",
   "border-l-violet-400 dark:border-l-violet-500",
   "border-l-cyan-500 dark:border-l-cyan-400",
-  "border-l-emerald-400 dark:border-l-emerald-500",
+  "border-l-blue-400 dark:border-l-blue-500",
   "border-l-slate-300 dark:border-l-slate-600",
 ];
 

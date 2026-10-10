@@ -12,7 +12,7 @@ export const STATUS_STYLES: Record<string, string> = {
     "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
   overdue:
     "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  paid: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  paid: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
 };
 
 interface Props {
@@ -111,7 +111,7 @@ export default function PaymentRow({ instance, onMarkPaid, onDelete, onReverted,
   function tileGradientClass(): string {
     const base = "bg-gradient-to-r from-0% to-70%";
     if (instance.status === "overdue") return `${base} from-red-100 to-white dark:from-red-500/10 dark:to-slate-800`;
-    if (instance.status === "paid") return `${base} from-green-100 to-white dark:from-green-500/10 dark:to-slate-800`;
+    if (instance.status === "paid") return `${base} from-blue-100 to-white dark:from-blue-500/10 dark:to-slate-800`;
     if (isDueToday) return `${base} from-orange-100 to-white dark:from-orange-400/10 dark:to-slate-800`;
     return `${base} from-blue-100 to-white dark:from-blue-400/10 dark:to-slate-800`;
   }
@@ -168,7 +168,7 @@ export default function PaymentRow({ instance, onMarkPaid, onDelete, onReverted,
             </span>
             <span className="text-slate-300 dark:text-slate-600">•</span>
             {instance.status === "paid" && paidAtFormatted ? (
-              <span className="text-emerald-600 dark:text-emerald-400 truncate">
+              <span className="text-blue-600 dark:text-blue-400 truncate">
                 {t("paidOn")} {paidAtFormatted}
                 {instance.paid_amount != null && parseFloat(instance.paid_amount) > 0 && (
                   <> · {instance.paid_amount} {instance.currency}</>
@@ -191,7 +191,7 @@ export default function PaymentRow({ instance, onMarkPaid, onDelete, onReverted,
             {!readOnly && instance.status !== "paid" && (
               <button
                 onClick={() => onMarkPaid(instance)}
-                className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-2.5 py-1 text-sm font-medium text-emerald-600 shadow-sm transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:bg-slate-800 dark:text-emerald-400 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
+                className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-sm font-medium text-blue-600 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:bg-slate-800 dark:text-blue-400 dark:hover:border-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
               >
                 <CheckCircle size={14} />
                 <span className="hidden sm:inline">{t("markAsPaid")}</span>

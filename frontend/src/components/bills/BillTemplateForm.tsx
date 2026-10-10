@@ -80,7 +80,7 @@ interface Errors {
 }
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-100 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:focus:border-green-600 dark:focus:ring-green-900/40";
+  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-900/40";
 
 const labelClass = "block text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1.5";
 
@@ -300,7 +300,7 @@ export default function BillTemplateForm({
               aria-label={t("currencyAriaLabel")}
               value={currencyOption}
               onChange={(e) => setCurrencyOption(e.target.value as CurrencyOption)}
-              className="w-28 shrink-0 rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-100 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:focus:border-green-600 dark:focus:ring-green-900/40"
+              className="w-28 shrink-0 rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-900/40"
             >
               {PRESET_CURRENCIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -335,8 +335,8 @@ export default function BillTemplateForm({
               onClick={() => handleFrequencyChange(v)}
               className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-all ${
                 frequency === v
-                  ? "border-green-600 bg-green-50 text-green-700 shadow-sm dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:bg-green-50 hover:text-green-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-emerald-700 dark:hover:text-emerald-400"
+                  ? "border-blue-600 bg-blue-50 text-blue-700 shadow-sm dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-blue-700 dark:hover:text-blue-400"
               }`}
             >
               {t(`frequency.${v}` as never)}
@@ -351,7 +351,7 @@ export default function BillTemplateForm({
                 aria-label={t("intervalAriaLabel")}
                 value={intervalCount}
                 onChange={(e) => handleIntervalChange(e.target.value)}
-                className="shrink-0 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-800 outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-green-600 dark:focus:ring-green-900/40"
+                className="shrink-0 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-800 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-900/40"
               >
                 {Array.from({ length: INTERVAL_MAX[frequency] }, (_, i) => i + 1).map((n) => (
                   <option key={n} value={n}>{n}</option>
@@ -371,7 +371,7 @@ export default function BillTemplateForm({
                 type="checkbox"
                 checked={limitedPayments}
                 onChange={(e) => handleLimitedPaymentsChange(e.target.checked)}
-                className="h-4 w-4 rounded accent-green-700"
+                className="h-4 w-4 rounded accent-blue-700"
               />
               {t("setNumberOfPayments")}
             </label>
@@ -465,7 +465,7 @@ export default function BillTemplateForm({
           type="checkbox"
           checked={isPaused}
           onChange={(e) => setIsPaused(e.target.checked)}
-          className="h-4 w-4 rounded accent-green-700"
+          className="h-4 w-4 rounded accent-blue-700"
         />
         {t("pauseRecurrence")}
       </label>
@@ -481,7 +481,7 @@ export default function BillTemplateForm({
         <button
           type="submit"
           disabled={saving}
-          className="rounded-xl border border-green-700 bg-green-700 px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:border-green-800 hover:bg-green-800 disabled:opacity-50"
+          className="rounded-xl border border-blue-700 bg-blue-700 px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:border-blue-800 hover:bg-blue-800 disabled:opacity-50"
         >
           {saving ? t("saving") : t("save")}
         </button>

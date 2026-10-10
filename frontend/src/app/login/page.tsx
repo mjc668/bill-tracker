@@ -83,7 +83,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center gap-2">
           <Image src="/platybill-logo.png" alt="Platybill" width={80} height={80} className="rounded-2xl shadow-md" priority />
-          <h1 className="text-2xl tracking-tight text-green-700 dark:text-green-500">
+          <h1 className="text-2xl tracking-tight text-blue-700 dark:text-blue-500">
             <span className="font-normal">Platy</span><span className="font-bold">bill</span>
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -140,7 +140,7 @@ export default function LoginPage() {
             {smtpConfigured ? (
               <Link
                 href="/forgot-password"
-                className="text-slate-500 hover:text-green-700 dark:text-slate-400 dark:hover:text-green-500"
+                className="text-slate-500 hover:text-blue-700 dark:text-slate-400 dark:hover:text-blue-500"
               >
                 {t("forgotPassword")}
               </Link>
@@ -161,7 +161,7 @@ export default function LoginPage() {
           {t("noAccount")}{" "}
           <Link
             href="/register"
-            className="font-medium text-green-700 hover:text-green-800 dark:text-green-500"
+            className="font-medium text-blue-700 hover:text-blue-800 dark:text-blue-500"
           >
             {t("register")}
           </Link>

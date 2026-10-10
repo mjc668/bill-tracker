@@ -352,11 +352,6 @@
         "error": "Restore failed. Please try again."
     },
     "ThemeToggle": {"ariaLabel": "Toggle theme"},
-    "LanguageToggle": {
-        "ariaLabel": "Switch language",
-        "label": "Language:",
-        "name": "English"
-    },
     "NotificationToggle": {"paymentIncoming": "Payment incoming"},
     "EmailRemindersToggle": {
         "enable": "Enable email reminders",

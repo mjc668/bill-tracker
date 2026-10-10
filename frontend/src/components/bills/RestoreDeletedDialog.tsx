@@ -22,7 +22,7 @@ export default function RestoreDeletedDialog({ billName, onRestore, onSkip, rest
         onKeyDown={(e) => e.key === "Escape" && !restoring && onSkip()}
         className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:bg-slate-800 dark:border-slate-700"
       >
-        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
           <RotateCcw size={22} />
         </div>
         <h2
@@ -46,7 +46,7 @@ export default function RestoreDeletedDialog({ billName, onRestore, onSkip, rest
           <button
             onClick={onRestore}
             disabled={restoring}
-            className="flex-1 rounded-xl border border-green-700 bg-green-700 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:border-green-800 hover:bg-green-800 disabled:opacity-50"
+            className="flex-1 rounded-xl border border-blue-700 bg-blue-700 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:border-blue-800 hover:bg-blue-800 disabled:opacity-50"
           >
             {restoring ? t("restoring") : t("restore")}
           </button>

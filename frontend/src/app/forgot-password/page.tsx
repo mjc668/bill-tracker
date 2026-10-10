@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
             className="rounded-2xl shadow-md"
             priority
           />
-          <h1 className="text-2xl tracking-tight text-green-700 dark:text-green-500">
+          <h1 className="text-2xl tracking-tight text-blue-700 dark:text-blue-500">
             <span className="font-normal">Platy</span><span className="font-bold">bill</span>
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -97,7 +97,7 @@ export default function ForgotPasswordPage() {
         <p className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
           <Link
             href="/login"
-            className="font-medium text-green-700 hover:text-green-800 dark:text-green-500"
+            className="font-medium text-blue-700 hover:text-blue-800 dark:text-blue-500"
           >
             {t("signIn")}
           </Link>

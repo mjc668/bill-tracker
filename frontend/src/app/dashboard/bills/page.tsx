@@ -35,7 +35,7 @@ function uniqueCategories(categories: Category[]): Category[] {
 const filterLabelClass =
   "mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500";
 const filterSelectClass =
-  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-green-600 dark:focus:ring-green-900/40";
+  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-blue-600 dark:focus:ring-blue-900/40";
 
 export default function BillsPage() {
   const t = useTranslations("BillsPage");
@@ -257,14 +257,14 @@ export default function BillsPage() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => toggleExpand("new")}
-              className="flex items-center gap-2 rounded-xl border border-green-700 bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:border-green-800 hover:bg-green-800 active:bg-green-900"
+              className="flex items-center gap-2 rounded-xl border border-blue-700 bg-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:border-blue-800 hover:bg-blue-800 active:bg-blue-900"
             >
               <Plus size={16} />
               {expandedId === "new" ? t("cancel") : t("newBill")}
             </button>
             <button
               onClick={() => setGenerateOpen(true)}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition-all hover:border-green-300 hover:bg-green-50 hover:text-green-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
             >
               <CalendarPlus size={16} />
               {t("generatePayments")}
@@ -364,9 +364,9 @@ export default function BillsPage() {
 
       {/* Inline create form */}
       {expandedId === "new" && (
-        <div className="mb-4 overflow-hidden rounded-xl border border-green-200 bg-white shadow-sm dark:border-green-900 dark:bg-slate-800">
-          <div className="border-b border-green-100 bg-green-50 px-5 py-3 dark:border-green-900 dark:bg-green-900/20">
-            <h2 className="text-sm font-semibold text-green-800 dark:text-green-300">{t("newBill")}</h2>
+        <div className="mb-4 overflow-hidden rounded-xl border border-blue-200 bg-white shadow-sm dark:border-blue-900 dark:bg-slate-800">
+          <div className="border-b border-blue-100 bg-blue-50 px-5 py-3 dark:border-blue-900 dark:bg-blue-900/20">
+            <h2 className="text-sm font-semibold text-blue-800 dark:text-blue-300">{t("newBill")}</h2>
           </div>
           <div className="p-5">
             <BillTemplateForm
@@ -400,7 +400,7 @@ export default function BillsPage() {
       {/* Template list */}
       {templates.length === 0 && expandedId !== "new" ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 px-6 py-16 text-center">
-          <div className="mb-3 rounded-full bg-green-100 dark:bg-green-900/30 p-4 text-green-700">
+          <div className="mb-3 rounded-full bg-blue-100 dark:bg-blue-900/30 p-4 text-blue-700">
             <Plus size={28} />
           </div>
           <p className="font-medium text-slate-700 dark:text-slate-300">{t("noBillsYet")}</p>
@@ -409,7 +409,7 @@ export default function BillsPage() {
           </p>
           <button
             onClick={() => toggleExpand("new")}
-            className="mt-4 rounded-xl border border-green-700 bg-green-700 px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:border-green-800 hover:bg-green-800"
+            className="mt-4 rounded-xl border border-blue-700 bg-blue-700 px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:border-blue-800 hover:bg-blue-800"
           >
             {t("addFirstBill")}
           </button>

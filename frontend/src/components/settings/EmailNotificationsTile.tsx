@@ -202,7 +202,7 @@ export function EmailNotificationsTile({
   }
 
   const checkboxClass =
-    "h-4 w-4 rounded border-slate-200 accent-green-700 focus:ring-green-500 dark:border-slate-600";
+    "h-4 w-4 rounded border-slate-200 accent-blue-700 focus:ring-blue-500 dark:border-slate-600";
   const labelClass = "ml-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer";
 
   const checkboxes: [string, boolean, (v: boolean) => void, string][] = [
@@ -260,7 +260,7 @@ export function EmailNotificationsTile({
           <select
             value={sendMinute}
             onChange={(e) => setSendMinute(Number(e.target.value))}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-green-500 focus:ring-2 focus:ring-green-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:focus:border-green-600 dark:focus:ring-green-900/40"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500 dark:focus:border-blue-600 dark:focus:ring-blue-900/40"
           >
             {SLOTS.map((h) => (
               <option key={h} value={h}>{fmtSlot(h)}</option>
@@ -274,7 +274,7 @@ export function EmailNotificationsTile({
               <button
                 onClick={save}
                 disabled={isSaving}
-                className="rounded-lg border border-green-700 bg-green-700 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:border-green-800 hover:bg-green-800 disabled:opacity-50"
+                className="rounded-lg border border-blue-700 bg-blue-700 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:border-blue-800 hover:bg-blue-800 disabled:opacity-50"
               >
                 {isSaving ? t("saving") : t("save")}
               </button>
@@ -296,7 +296,7 @@ export function EmailNotificationsTile({
           <button
             onClick={handleSendNow}
             disabled={isSendingNow || !emailEnabled || isDirty || noChannelConfigured}
-            className="flex items-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition-all hover:border-green-300 hover:bg-green-50 hover:text-green-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
+            className="flex items-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
           >
             {isSendingNow ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
             {isSendingNow ? tp("emailNotifications.sendNowSending") : tp("emailNotifications.sendNowButton")}
@@ -306,7 +306,7 @@ export function EmailNotificationsTile({
             <p className="text-sm text-red-600 dark:text-red-400">{sendNowResult.error}</p>
           )}
           {sendNowResult && "sent" in sendNowResult && (
-            <p className="text-sm text-green-600 dark:text-green-500">
+            <p className="text-sm text-blue-600 dark:text-blue-500">
               {sendNowResult.sent === 0
                 ? tp("emailNotifications.sendNowNoReminders")
                 : tp("emailNotifications.sendNowSent", { count: sendNowResult.sent })}
@@ -325,7 +325,7 @@ export function EmailNotificationsTile({
           <button
             onClick={handleSendSummary}
             disabled={isSendingSummary || !emailEnabled || !monthlySummary || isDirty || noChannelConfigured}
-            className="flex items-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition-all hover:border-green-300 hover:bg-green-50 hover:text-green-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
+            className="flex items-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
           >
             {isSendingSummary ? <Loader2 size={14} className="animate-spin" /> : <BarChart2 size={14} />}
             {isSendingSummary
@@ -337,7 +337,7 @@ export function EmailNotificationsTile({
             <p className="text-sm text-red-600 dark:text-red-400">{sendSummaryResult.error}</p>
           )}
           {sendSummaryResult && "sent" in sendSummaryResult && (
-            <p className="text-sm text-green-600 dark:text-green-500">
+            <p className="text-sm text-blue-600 dark:text-blue-500">
               {sendSummaryResult.sent
                 ? tp("emailNotifications.sendMonthlySummarySent")
                 : tp("emailNotifications.sendMonthlySummaryNoData")}
@@ -358,7 +358,7 @@ export function EmailNotificationsTile({
           <span
             className={
               smtpConfigured
-                ? "text-sm text-green-600 dark:text-green-500"
+                ? "text-sm text-blue-600 dark:text-blue-500"
                 : "text-sm text-slate-400 dark:text-slate-500"
             }
           >
@@ -375,7 +375,7 @@ export function EmailNotificationsTile({
           <span
             className={
               appriseConfigured
-                ? "text-sm text-green-600 dark:text-green-500"
+                ? "text-sm text-blue-600 dark:text-blue-500"
                 : "text-sm text-slate-400 dark:text-slate-500"
             }
           >
@@ -397,7 +397,7 @@ export function EmailNotificationsTile({
         <button
           onClick={handleSendTest}
           disabled={isSendingTest}
-          className="flex items-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition-all hover:border-green-300 hover:bg-green-50 hover:text-green-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
+          className="flex items-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
         >
           {isSendingTest ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
           {isSendingTest
@@ -412,7 +412,7 @@ export function EmailNotificationsTile({
           <p
             className={
               testResult.ok
-                ? "text-sm text-green-600 dark:text-green-500"
+                ? "text-sm text-blue-600 dark:text-blue-500"
                 : "text-sm text-red-600 dark:text-red-400"
             }
           >

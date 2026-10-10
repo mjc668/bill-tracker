@@ -139,16 +139,16 @@ export default function PaymentCalendar({
                     onClick={() => setSelectedDay(key)}
                     className={`flex min-h-[76px] flex-col items-stretch gap-1 rounded-lg border p-1 text-left align-top transition-colors ${
                       isSelected
-                        ? "border-green-600 bg-green-50 dark:border-emerald-600 dark:bg-emerald-900/20"
-                        : "border-slate-200 bg-white hover:border-green-300 hover:bg-green-50/50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-700"
+                        ? "border-blue-600 bg-blue-50 dark:border-blue-600 dark:bg-blue-900/20"
+                        : "border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50/50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-700"
                     }`}
                   >
                     <span
                       className={`self-center rounded-full px-1.5 text-xs font-semibold tabular-nums ${
                         isToday
-                          ? "bg-green-700 text-white dark:bg-emerald-600"
+                          ? "bg-blue-700 text-white dark:bg-blue-600"
                           : isSelected
-                            ? "text-green-800 dark:text-emerald-300"
+                            ? "text-blue-800 dark:text-blue-300"
                             : "text-slate-600 dark:text-slate-300"
                       }`}
                     >

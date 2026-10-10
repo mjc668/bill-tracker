@@ -49,7 +49,7 @@ export function BrowserNotificationsTile({
       ) : (
         <button
           onClick={requestPermission}
-          className="rounded-lg border border-green-700 bg-green-700 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:border-green-800 hover:bg-green-800"
+          className="rounded-lg border border-blue-700 bg-blue-700 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:border-blue-800 hover:bg-blue-800"
         >
           {tp("browserNotifications.enable")}
         </button>

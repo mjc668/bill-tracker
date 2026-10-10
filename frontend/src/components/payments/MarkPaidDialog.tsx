@@ -76,7 +76,7 @@ export default function MarkPaidDialog({
         onKeyDown={(e) => e.key === "Escape" && !isSubmitting && onClose()}
         className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:bg-slate-800 dark:border-slate-700"
       >
-        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
           <CheckCircle size={22} />
         </div>
 
@@ -94,7 +94,7 @@ export default function MarkPaidDialog({
           >
             {t("amountLabel")}
           </label>
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-100 dark:border-slate-600 dark:bg-slate-900/40 dark:focus-within:border-green-600">
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 dark:border-slate-600 dark:bg-slate-900/40 dark:focus-within:border-blue-600">
             <input
               id="paid-amount"
               type="number"
@@ -134,7 +134,7 @@ export default function MarkPaidDialog({
             value={paidOn}
             max={todayLocalIso()}
             onChange={(e) => setPaidOn(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100 dark:border-slate-600 dark:bg-slate-900/40 dark:text-slate-100 dark:focus:border-green-600"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-900/40 dark:text-slate-100 dark:focus:border-blue-600"
           />
         </div>
 
@@ -150,7 +150,7 @@ export default function MarkPaidDialog({
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100 dark:border-slate-600 dark:bg-slate-900/40 dark:text-slate-100 dark:focus:border-green-600"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-900/40 dark:text-slate-100 dark:focus:border-blue-600"
           />
         </div>
 
@@ -171,7 +171,7 @@ export default function MarkPaidDialog({
           <button
             onClick={handleConfirm}
             disabled={isSubmitting || !amountValid}
-            className="flex-1 rounded-xl border border-emerald-600 bg-emerald-600 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:border-emerald-700 hover:bg-emerald-700 disabled:opacity-50"
+            className="flex-1 rounded-xl border border-blue-600 bg-blue-600 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:border-blue-700 hover:bg-blue-700 disabled:opacity-50"
           >
             {isSubmitting ? t("confirming") : t("confirm")}
           </button>
