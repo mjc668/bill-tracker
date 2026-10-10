@@ -15,8 +15,10 @@ export default defineConfig({
   workers: 1,
   reporter: process.env.CI ? 'github' : 'html',
   webServer: {
-    command: 'docker compose -f ../docker-compose.yml up -d --wait --timeout 180 app demo-data',
-    url: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3010',
+    // Detached on purpose: --wait fails when the one-shot demo seeder exits.
+    // Probing /api/health also ensures uvicorn is up, not just the UI.
+    command: 'docker compose -f ../docker-compose.yml --profile demo up -d --timeout 180 app demo-data',
+    url: `${process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3010'}/api/health`,
     reuseExistingServer: true,
     timeout: 120_000,
   },

@@ -109,7 +109,11 @@ jobs:
         run: docker compose --profile demo build
 
       - name: Start stack
-        run: docker compose up -d --wait --timeout 180 app demo-data
+        # --wait fails on the one-shot demo seeder because it exits (even 0),
+        # so wait for the app separately and run the seeder attached.
+        run: |
+          docker compose up -d --wait --timeout 180 app
+          docker compose --profile demo up demo-data --exit-code-from demo-data
 
       - name: Run e2e tests
         working-directory: frontend
