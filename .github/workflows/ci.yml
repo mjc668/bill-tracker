@@ -179,6 +179,9 @@ jobs:
           platforms: ${{ matrix.platform }}
           build-args: |
             NEXT_PUBLIC_APP_VERSION=sha-${{ env.SHORT_SHA }}
+          # Docker media types: podman ignores the config healthcheck in OCI
+          # images, which would silently drop compose health gating there.
+          oci-mediatypes: false
           outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/platybill,push-by-digest=true,name-canonical=true,push=true
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
