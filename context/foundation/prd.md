@@ -200,15 +200,15 @@ household finance manager does not need to check the dashboard proactively.
 
 ### Localisation
 
-- FR-016: UI is available in English and Polish. The user can switch language via a toggle
-  in the UI. Priority: must-have
-  > Socratic: Two languages cover the primary household (Polish-speaking) and English as
-  > universal fallback. Additional locales deferred to v2.
+- FR-016: The UI ships in English only for the Platybill launch; the language switcher and
+  the Polish/German translations are stripped for now. Priority: could-have (deferred)
+  > Socratic: The 3.1.x line shipped en/pl/de; keeping one locale during the SQLite +
+  > rebrand relaunch cuts surface area. Backend reminder emails still carry en/pl/de
+  > templates and honor the stored per-account language preference, so existing accounts
+  > keep receiving emails in their language.
 
-- FR-017: The user's selected language is persisted per account and restored automatically
-  after login. Priority: must-have
-  > Socratic: Without persistence the user must re-select the language on every session,
-  > which contradicts the "household-first" convenience goal.
+- FR-017: (deferred with FR-016) The UI language switcher and per-account locale
+  persistence return when translations are reintroduced.
 
 ## Non-Functional Requirements
 
