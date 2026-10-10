@@ -53,7 +53,10 @@ RUN useradd --create-home --uid 10001 appuser \
 EXPOSE 3010
 VOLUME ["/data"]
 
+# Both processes must answer: the UI on 3010 and the API on 8010. Probing
+# only the UI let dependents (demo seeding, service_healthy) start before
+# uvicorn was ready.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
-    CMD python -c "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:3010/', timeout=4).status < 500 else 1)"
+    CMD python -c "import sys, urllib.request; api = urllib.request.urlopen('http://127.0.0.1:8010/health', timeout=4).status; ui = urllib.request.urlopen('http://127.0.0.1:3010/', timeout=4).status; sys.exit(0 if api < 500 and ui < 600 else 1)"
 
 ENTRYPOINT ["/entrypoint.sh"]

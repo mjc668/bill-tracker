@@ -4,6 +4,7 @@
 import json
 import os
 import sys
+import time
 from datetime import date
 from pathlib import Path
 
@@ -17,6 +18,24 @@ BASE_URL = os.environ.get("SEED_BASE_URL", "http://localhost:8010")
 EMAIL = "demo@demo.com"
 PASSWORD = "demo1234"
 DATA_FILE = Path(__file__).parent / "seed_data.json"
+
+
+def wait_for_api(session: httpx.Client, timeout: int = 60) -> None:
+    """Wait until the backend answers /health.
+
+    The container turns healthy as soon as the Next server accepts requests,
+    which can be before uvicorn is ready; seeding must not race that.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            if session.get(f"{BASE_URL}/health").status_code == 200:
+                return
+        except httpx.HTTPError:
+            pass
+        time.sleep(1)
+    print(f"  API did not become ready within {timeout}s")
+    sys.exit(1)
 
 
 def register(session: httpx.Client) -> None:
@@ -121,13 +140,16 @@ def main() -> None:
     print()
 
     with httpx.Client() as session:
-        print("1. Registering user...")
+        print("1. Waiting for the API...")
+        wait_for_api(session)
+
+        print("2. Registering user...")
         register(session)
 
-        print("2. Logging in...")
+        print("3. Logging in...")
         login(session)
 
-        print("3. Restoring seed data...")
+        print("4. Restoring seed data...")
         restore(session)
 
     print()
