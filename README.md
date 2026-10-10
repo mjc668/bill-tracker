@@ -1,6 +1,6 @@
 # Platybill
 
-A self-hosted household bill tracking PWA. Define your recurring bills once, then each period's payment instances are generated automatically. Track what's paid from any device — phone, tablet, or desktop. Platybill's mascot is a wombat.
+A self-hosted household bill tracking PWA. Define your recurring bills once, then each period's payment instances are generated automatically. Track what's paid from any device — phone, tablet, or desktop. Platybill's mascot is a platypus.
 
 No third-party data sharing. No subscription. Runs as a single Docker container with all data in one SQLite file — no external database. Each user's data is fully isolated.
 
@@ -110,7 +110,7 @@ The settings page also shows the current server time so you can set send times r
 | `JWT_SECRET` | no | JWT signing secret. Leave empty to auto-generate and persist at `/data/jwt_secret`; set it to keep an existing secret |
 | `ENVIRONMENT` | no | `development` (default) or `production` — production disables API docs and rejects a weak/default JWT secret |
 | `COOKIE_SECURE` | no | Set `true` when serving over HTTPS; over plain HTTP browsers reject Secure cookies and login bounces |
-| `TRUST_PROXY` | no | Set `true` behind a reverse proxy so rate limiting uses the real client IP from `X-Forwarded-For` (default `true`) |
+| `TRUST_PROXY` | no | Set `true` only behind a reverse proxy that appends the real client IP to `X-Forwarded-For` (Caddy/nginx/SWAG/Cloudflare). Default `false`: exposing the container directly, the built-in proxy forwards client-supplied headers, so trusting them would allow rate-limit bypass |
 | `APP_BASE_URL` | no | Public URL of the app, used in password-reset links (default `http://localhost:3010`) |
 | `DATABASE_URL` | no | Optional override; defaults to `sqlite:////data/platybill.db` |
 | `TZ` | no | Time zone for the scheduler and logs, e.g. `Europe/Warsaw` (`Etc/UTC` default) |
@@ -230,7 +230,7 @@ The prepared template configures:
 - Port `3010`
 - `/data` → `/mnt/user/appdata/platybill`
 - PUID `99` / PGID `100`, plus `TZ`
-- `ENVIRONMENT=production`, `COOKIE_SECURE`, `APP_BASE_URL`, `TRUST_PROXY=true`
+- `ENVIRONMENT=production`, `COOKIE_SECURE`, `APP_BASE_URL`, `TRUST_PROXY` (false for direct access; true only behind a proxy)
 
 HTTPS via [SWAG](https://docs.linuxserver.io/general/swag/) (or another reverse proxy) is recommended: PWA installation and secure cookies need it.
 

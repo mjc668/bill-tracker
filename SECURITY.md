@@ -38,6 +38,23 @@ as an immutable `sha-<7>` image tag, and `main`/`latest` roll forward to the
 newest build. Only the **newest build** receives security fixes — upgrade to the
 latest tag (or re-pull the tag you follow) to stay supported.
 
+## Deployment hardening
+
+- **`TRUST_PROXY`:** leave the default `false` when the app is reachable directly
+  on its published port. Set it to `true` only behind a reverse proxy you control
+  (Caddy, nginx, SWAG, Cloudflare) that appends the client address to
+  `X-Forwarded-For` — rate limiting then keys on that address. The in-container
+  Next proxy forwards a client-supplied `X-Forwarded-For` unchanged, so enabling
+  this on a directly exposed port lets clients spoof their IP and bypass rate
+  limits.
+- **TLS:** serve over HTTPS and set `COOKIE_SECURE=true`; over plain HTTP the
+  auth cookies are rejected by browsers and login will not persist.
+- **JWT secret:** `ENVIRONMENT=production` refuses to start with the default or a
+  short secret. Leave `JWT_SECRET` empty to have one generated and persisted at
+  `/data/jwt_secret`, or set a strong value yourself.
+- **Backups:** `/data/backups` snapshots contain full account data; protect the
+  appdata directory with the same care as the database file.
+
 ## No bug bounty
 
 This is a volunteer project. We cannot offer monetary rewards, but we are happy

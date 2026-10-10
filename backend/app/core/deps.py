@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError
+import jwt
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -29,7 +29,7 @@ def current_user(
         )
     try:
         payload = decode_token(token)
-    except JWTError:
+    except jwt.InvalidTokenError:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token")
     try:
         user_id = int(payload["sub"])
@@ -69,7 +69,7 @@ def optional_current_user(
         return None
     try:
         payload = decode_token(token)
-    except JWTError:
+    except jwt.InvalidTokenError:
         return None
     try:
         user_id = int(payload["sub"])

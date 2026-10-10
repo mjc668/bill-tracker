@@ -207,7 +207,7 @@ Relevant env vars:
 | Env var | HTTPS value | Why |
 |---|---|---|
 | `COOKIE_SECURE` | `true` | Adds `Secure` to the auth cookies. Over plain HTTP browsers drop them and login bounces back to `/login` — the backend logs a startup warning if this is misconfigured. |
-| `TRUST_PROXY` | `true` | Rate limiting uses the real client IP from `X-Forwarded-For`. |
+| `TRUST_PROXY` | `true` | Rate limiting uses the real client IP from `X-Forwarded-For`. Safe only because Caddy/Cloudflare append the observed client address; never enable it while the container port is exposed directly. |
 | `APP_BASE_URL` | `https://pay.example.com` | Used in password-reset links. |
 | `ENVIRONMENT` | `production` | Disables API docs and rejects a weak/default JWT secret. |
 
