@@ -81,7 +81,8 @@ export default function DashboardLayout({
             href="/dashboard"
             className="flex items-center gap-2 text-blue-700 transition-opacity hover:opacity-80 dark:text-blue-500"
           >
-            <Image src="/platybill-logo.png" alt="Platybill" width={32} height={32} className="rounded-xl" />
+            <Image src="/platybill-logo-light.png" alt="Platybill" width={32} height={32} className="rounded-xl dark:hidden" />
+            <Image src="/platybill-logo.png" alt="Platybill" width={32} height={32} className="hidden rounded-xl dark:block" />
             <span className="text-lg tracking-tight">
               <span className="font-normal">Platy</span><span className="font-bold">bill</span>
             </span>

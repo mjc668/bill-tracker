@@ -51,7 +51,8 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center gap-2">
-          <Image src="/platybill-logo.png" alt="Platybill" width={80} height={80} className="rounded-2xl shadow-md" priority />
+          <Image src="/platybill-logo-light.png" alt="Platybill" width={104} height={104} className="rounded-2xl shadow-md dark:hidden" priority />
+          <Image src="/platybill-logo.png" alt="Platybill" width={104} height={104} className="hidden rounded-2xl shadow-md dark:block" priority />
           <h1 className="text-2xl tracking-tight text-blue-700 dark:text-blue-500">
             <span className="font-normal">Platy</span><span className="font-bold">bill</span>
           </h1>
